@@ -1,0 +1,6 @@
+# ignore node dependencies
+node_modules/*
+
+# Code editions e.g VSCode
+.vscode/*
+
