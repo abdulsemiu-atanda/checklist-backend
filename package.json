@@ -4,7 +4,9 @@
   "description": "Todo App that helps users add, create and share todo items",
   "main": "index.js",
   "scripts": {
-    "dev": "NODE_ENV=development nodemon ./src/index.js --exec babel-node"
+    "dev": "NODE_ENV=development nodemon ./src/index.js --exec babel-node",
+    "prepare:db": "yarn sequelize-cli db:migrate && yarn sequelize-cli db:seed:all",
+    "clean:db": "yarn sequelize-cli db:migrate:undo:all"
   },
   "repository": "https://github.com/abdulsemiu-atanda/checklist-backend.git",
   "author": "Abdulsemiu Atanda <semiu@live.com>",
@@ -18,7 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.1",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.5"
+    "sequelize": "^6.37.5",
+    "uuid": "^11.0.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.25.9",
