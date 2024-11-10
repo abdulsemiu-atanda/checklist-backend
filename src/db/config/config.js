@@ -1,6 +1,7 @@
 require('@babel/register')
+require('dotenv').config({path: ['.env', `.env.${process.env.NODE_ENV || 'development'}`]})
 
-export default {
+module.exports = {
   "development": {
     "use_env_variable": "DATABASE_URL",
     "dialect": "postgres"
