@@ -4,3 +4,6 @@ node_modules/*
 # Code editions e.g VSCode
 .vscode/*
 
+# Environment variables
+*.env
+.env.development
