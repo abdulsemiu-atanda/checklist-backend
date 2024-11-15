@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "NODE_ENV=development nodemon ./src/index.js --exec babel-node",
     "prepare:db": "yarn sequelize-cli db:migrate && yarn sequelize-cli db:seed:all",
-    "clean:db": "yarn sequelize-cli db:migrate:undo:all"
+    "clean:db": "yarn sequelize-cli db:seed:undo:all && yarn sequelize-cli db:migrate:undo:all"
   },
   "repository": "https://github.com/abdulsemiu-atanda/checklist-backend.git",
   "author": "Abdulsemiu Atanda <semiu@live.com>",
