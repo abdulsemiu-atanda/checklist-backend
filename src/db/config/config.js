@@ -4,7 +4,8 @@ require('dotenv').config({path: ['.env', `.env.${process.env.NODE_ENV || 'develo
 module.exports = {
   "development": {
     "use_env_variable": "DATABASE_URL",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "seederStorage": "sequelize"
   },
   "test": {
     "use_env_variable": "TEST_DATABASE_URL",
@@ -14,6 +15,7 @@ module.exports = {
   "production": {
     "use_env_variable": "DATABASE_URL",
     "dialect": "postgres",
-    "logging": false
+    "logging": false,
+    "seederStorage": "sequelize"
   }
 }

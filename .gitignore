@@ -3,7 +3,12 @@ node_modules/*
 
 # Code editions e.g VSCode
 .vscode/*
+.DS_Store
 
 # Environment variables
 *.env
 .env.development
+
+# Coverage
+.nyc_output/*
+coverage/*
