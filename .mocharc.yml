@@ -1,0 +1,4 @@
+require: '@babel/register'
+spec:
+  - 'tests/**/*.test.js' # the positional arguments!
+timeout: '3000' # same as "timeout: '2s'"

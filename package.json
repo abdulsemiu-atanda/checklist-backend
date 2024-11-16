@@ -2,9 +2,13 @@
   "name": "checklist-backend",
   "version": "1.0.0",
   "description": "Todo App that helps users add, create and share todo items",
+  "directories": {
+    "test": "tests"
+  },
   "main": "index.js",
   "scripts": {
     "dev": "NODE_ENV=development nodemon ./src/index.js --exec babel-node",
+    "test": "babel-node node_modules/.bin/nyc mocha",
     "prepare:db": "yarn sequelize-cli db:migrate && yarn sequelize-cli db:seed:all",
     "clean:db": "yarn sequelize-cli db:seed:undo:all && yarn sequelize-cli db:migrate:undo:all"
   },
@@ -30,7 +34,11 @@
     "@babel/node": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "@babel/register": "^7.25.9",
+    "chai": "^4.5.0",
+    "coveralls": "^3.1.1",
+    "mocha": "^10.8.2",
     "nodemon": "^3.1.7",
+    "nyc": "^17.1.0",
     "sequelize-cli": "^6.6.2"
   },
   "engines": {
