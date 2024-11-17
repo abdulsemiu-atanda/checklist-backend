@@ -7,8 +7,9 @@
   },
   "main": "index.js",
   "scripts": {
+    "pretest": "NODE_ENV=test yarn sequelize-cli db:migrate",
     "dev": "NODE_ENV=development nodemon ./src/index.js --exec babel-node",
-    "test": "babel-node node_modules/.bin/nyc mocha",
+    "test": "NODE_ENV=test babel-node node_modules/.bin/nyc mocha",
     "prepare:db": "yarn sequelize-cli db:migrate && yarn sequelize-cli db:seed:all",
     "clean:db": "yarn sequelize-cli db:seed:undo:all && yarn sequelize-cli db:migrate:undo:all"
   },
