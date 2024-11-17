@@ -10,3 +10,6 @@ node_modules/*
 
 #ignore migrations
 src/db/migrations/
+
+#ignore seeders
+src/db/seeders/
