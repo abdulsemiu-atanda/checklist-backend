@@ -22,7 +22,8 @@ export default (sequelize, DataTypes) => {
     },
     name: {
       allowNull: false,
-      type: DataTypes.ENUM(ADMIN, USER)
+      type: DataTypes.ENUM(ADMIN, USER),
+      unique: true
     }
   }, {
     sequelize,

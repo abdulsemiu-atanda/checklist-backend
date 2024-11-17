@@ -1,5 +1,5 @@
 'use strict';
-const roleNames = require('../../config/roles')
+const {ADMIN, USER} = require('../../config/roles')
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -12,7 +12,7 @@ module.exports = {
       },
       name: {
         allowNull: false,
-        type: Sequelize.ENUM(roleNames.ADMIN, roleNames.USER),
+        type: Sequelize.ENUM(ADMIN, USER),
         unique: true
       },
       createdAt: {
