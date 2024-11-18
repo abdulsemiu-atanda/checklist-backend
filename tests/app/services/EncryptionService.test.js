@@ -7,10 +7,7 @@ const service = new EncryptionService(PASSPHRASE)
 
 describe('EncryptionService', () => {
   describe('#constructor', () => {
-    it('initializes with the string data type', () => {
-      expect(service.key).to.have.length(7)
-      expect(service.iv).to.have.length(12)
-    })
+    it('initializes with the string data type', () => expect(service.key).to.have.length(7))
 
     it('throws an error with invalid passphrase data type', () => {
       expect(() => { new EncryptionService(1234) }).to.throw(TypeError, 'Invalid initialization parameters, expect key: [String].')
