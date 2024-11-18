@@ -5,18 +5,18 @@ class SymmetricEncryptionService extends EncryptionService {
   #ALGORITHM = 'AES-GCM'
   #RADIX = 16
 
-  async encrypt(data) {
+  async encrypt(data, iv = crypto.getRandomValues(new Uint8Array(12))) {
     const encodedData = new TextEncoder().encode(data)
     const keyHash = await this.digest()
     const importedKey = await crypto.subtle.importKey('raw', keyHash, {name: this.#ALGORITHM}, false, ['encrypt']);
     const encryptedData = await crypto.subtle.encrypt(
-      {name: this.#ALGORITHM, iv: this.iv},
+      {name: this.#ALGORITHM, iv},
       importedKey,
       encodedData
     )
     const encryptedDataArray = Array.from(new Uint8Array(encryptedData))
     const bytesToString = encryptedDataArray.map(byte => String.fromCharCode(byte)).join('')
-    const ivHex = Array.from(this.iv).map(byte => ('00' + byte.toString(this.#RADIX)).slice(-2)).join('')
+    const ivHex = Array.from(iv).map(byte => ('00' + byte.toString(this.#RADIX)).slice(-2)).join('')
 
     return `${ivHex}${btoa(bytesToString)}`
   }

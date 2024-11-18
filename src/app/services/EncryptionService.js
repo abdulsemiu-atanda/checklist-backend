@@ -2,7 +2,6 @@ import crypto from 'crypto'
 
 class EncryptionService {
   #DIGEST_ALGORITHM = 'SHA-256'
-  iv = crypto.getRandomValues(new Uint8Array(12))
   key
 
   constructor(key) {
