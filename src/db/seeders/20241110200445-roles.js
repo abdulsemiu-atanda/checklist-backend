@@ -1,6 +1,6 @@
 'use strict';
 
-import { v4 as uuidV4 } from 'uuid'
+import {v4 as uuidV4} from 'uuid'
 
 import {dateToISOString} from '../../util/tools'
 
@@ -31,6 +31,6 @@ module.exports = {
      * await queryInterface.bulkDelete('People', null, {});
      */
 
-    await queryInterface.bulkDelete('Roles', null, {});
+    await queryInterface.bulkDelete('Roles', null, {})
   }
-};
+}
