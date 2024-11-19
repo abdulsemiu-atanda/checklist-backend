@@ -7,9 +7,3 @@ node_modules/*
 # Environment variables
 *.env
 .env.development
-
-#ignore migrations
-src/db/migrations/
-
-#ignore seeders
-src/db/seeders/
