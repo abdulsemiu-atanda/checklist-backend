@@ -62,10 +62,10 @@ class DataService {
   update(id, attributes) {
     return this.show({id}).then(record => record.update(attributes))
   }
-  
+
   /**
    * Destroys the record with the specified id
-   * @param {String} id 
+   * @param {String} id
    * @returns {Promise}
    */
   destroy(id) {
