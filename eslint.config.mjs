@@ -15,8 +15,9 @@ export default [
   pluginJs.configs.recommended,
   jsdoc.configs['flat/recommended'],
   {
+    ignores: ['src/db/migrations/', 'src/db/seeders/'],
     rules: {
-      'no-unused-vars': 0,
+      'no-unused-vars': 1,
       'no-undef': 0,
       'one-var': 0,
       'one-var-declaration-per-line': 0,
