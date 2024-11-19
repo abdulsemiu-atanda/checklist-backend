@@ -4,18 +4,17 @@ import jsdoc from 'eslint-plugin-jsdoc';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
-  { files: ['**/*.js'], languageOptions: { sourceType: 'commonjs' } },
+  { files: ['src/app/**/*.js'], languageOptions: { sourceType: 'commonjs' } },
   {
     languageOptions: {
       globals: globals.node,
       sourceType: 'module',
-      ecmaVersion: 6,
+      ecmaVersion: 'latest',
     },
   },
   pluginJs.configs.recommended,
   jsdoc.configs['flat/recommended'],
   {
-    ignores: ['src/db/migrations/', 'src/db/seeders/'],
     rules: {
       'no-unused-vars': 1,
       'no-undef': 0,
