@@ -50,8 +50,8 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       get() { return encryption.decrypt(this.getDataValue('email')) },
       set(value) {
-        this.setDataValue('email', encryption.encrypt(value))
-        this.setDataValue('emailDigest', digest(value))
+        this.setDataValue('email', encryption.encrypt(value.toLowerCase()))
+        this.setDataValue('emailDigest', digest(value.toLowerCase()))
       }
     },
     emailDigest: {
