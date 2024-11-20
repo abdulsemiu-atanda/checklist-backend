@@ -19,14 +19,10 @@ const auth = {
     if (EMAIL_REGEX.test(req.body.email)) {
       role.show({name: USER}).then(record => {
         if (record) {
-          user.create({...req.body, RoleId: record.id}).then(([newUser, created]) => {
-            if (created) {
-              const token = jwt.sign({id: newUser.id, roleId: newUser.RoleId}, process.env.SECRET, {expiresIn: '1h'})
+          user.create({...req.body, RoleId: record.id}).then(([newUser]) => {
+            const token = jwt.sign({id: newUser.id, roleId: newUser.RoleId}, process.env.SECRET, {expiresIn: '1h'})
 
-              res.status(CREATED).send({message: 'User successfully created.', token})
-            } else {
-              res.status(CONFLICT).send({message: 'Unable to complete request.'})
-            }
+            res.status(CREATED).send({message: 'User successfully created.', token})
           }).catch(({errors}) => {
             const [error] = errors
 
