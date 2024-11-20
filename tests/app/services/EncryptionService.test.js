@@ -2,47 +2,28 @@ import {expect} from 'chai'
 
 import EncryptionService from '../../../src/app/services/EncryptionService'
 
-const PASSPHRASE = 'testing'
+const PASSPHRASE = process.env.DATA_ENCRYPTION_KEY
 const service = new EncryptionService(PASSPHRASE)
 
 describe('EncryptionService', () => {
   describe('#constructor', () => {
-    it('initializes with the string data type', () => expect(service.key).to.have.length(7))
+    it('initializes key with correct length', () => expect(service.key).to.have.length(32))
 
     it('throws an error with invalid passphrase data type', () => {
-      expect(() => { new EncryptionService(1234) }).to.throw(TypeError, 'Invalid initialization parameters, expect key: [String].')
-    })
-  })
-
-  describe('#digest', () => {
-    it('returns a SHA-256 digest of the encryption key', done => {
-      service.digest().then(digest => {
-        expect(digest.byteLength).to.equal(32)
-
-        done()
-      })
+      expect(() => { new EncryptionService(1234) }).to.throw(TypeError, 'Invalid initialization parameters, expect key: [String] with length 32.')
+      expect(() => { new EncryptionService('testing') }).to.throw(TypeError, 'Invalid initialization parameters, expect key: [String] with length 32.')
     })
   })
 
   describe('#encrypt', () => {
-    it('throws an error for undefined method', done => {
-      service.encrypt('Baba Agbalagba').catch(error => {
-        expect(error.message).to.equal('encrypt is undefined')
-        expect(error.name).to.equal('ReferenceError')
-
-        done()
-      })
+    it('throws an error for undefined method', () => {
+      expect(() => { service.encrypt('Baba Agbalagba') }).to.throw(ReferenceError, 'encrypt is undefined')
     })
   })
 
   describe('#decrypt', () => {
-    it('throws an error for undefined method', done => {
-      service.decrypt('tjha==yuhbqf').catch(error => {
-        expect(error.message).to.equal('decrypt is undefined')
-        expect(error.name).to.equal('ReferenceError')
-
-        done()
-      })
+    it('throws an error for undefined method', () => {
+      expect(() => { service.decrypt('48cb97ba87758bb3ae136b9f3f4') }).to.throw(ReferenceError, 'decrypt is undefined')
     })
   })
 })
