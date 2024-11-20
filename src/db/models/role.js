@@ -11,6 +11,7 @@ export default (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Role.hasMany(models.User)
     }
   }
 
@@ -22,7 +23,8 @@ export default (sequelize, DataTypes) => {
     },
     name: {
       allowNull: false,
-      type: DataTypes.ENUM(ADMIN, USER)
+      type: DataTypes.ENUM(ADMIN, USER),
+      unique: true
     }
   }, {
     sequelize,

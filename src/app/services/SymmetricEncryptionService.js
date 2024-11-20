@@ -2,37 +2,27 @@ import crypto from 'crypto'
 import EncryptionService from './EncryptionService'
 
 class SymmetricEncryptionService extends EncryptionService {
-  #ALGORITHM = 'AES-GCM'
-  #RADIX = 16
+  #ALGORITHM = 'aes-256-cbc'
+  #INPUT_ENCODING = 'utf8'
+  #OUTPUT_ENCODING = 'hex'
+  #RADIX = 8
 
-  async encrypt(data) {
-    const encodedData = new TextEncoder().encode(data)
-    const keyHash = await this.digest()
-    const importedKey = await crypto.subtle.importKey('raw', keyHash, {name: this.#ALGORITHM}, false, ['encrypt']);
-    const encryptedData = await crypto.subtle.encrypt(
-      {name: this.#ALGORITHM, iv: this.iv},
-      importedKey,
-      encodedData
-    )
-    const encryptedDataArray = Array.from(new Uint8Array(encryptedData))
-    const bytesToString = encryptedDataArray.map(byte => String.fromCharCode(byte)).join('')
-    const ivHex = Array.from(this.iv).map(byte => ('00' + byte.toString(this.#RADIX)).slice(-2)).join('')
+  encrypt(data, iv = crypto.randomBytes(this.#RADIX).toString(this.#OUTPUT_ENCODING)) {
+    const cipher = crypto.createCipheriv(this.#ALGORITHM, this.key, Buffer.from(iv))
+    let encrypted = cipher.update(data, this.#INPUT_ENCODING, this.#OUTPUT_ENCODING)
+    encrypted += cipher.final(this.#OUTPUT_ENCODING)
 
-    return `${ivHex}${btoa(bytesToString)}`
+    return `${iv}${encrypted}`
   }
 
-  async decrypt(encryptedData) {
-    const keyHash = await this.digest()
-    const iv = new Uint8Array(encryptedData.slice(0,24).match(/.{2}/g).map(byte => parseInt(byte, this.#RADIX)))
-    const importedKey = await crypto.subtle.importKey('raw', keyHash, {name: this.#ALGORITHM}, false, ['decrypt']);
-    const cipher = new Uint8Array(atob(encryptedData.slice(24)).match(/[\s\S]/g).map(ch => ch.charCodeAt(0)))
-    const decrypted = await crypto.subtle.decrypt(
-      {name: this.#ALGORITHM, iv},
-      importedKey,
-      cipher
-    )
+  decrypt(encryptedData) {
+    const iv = encryptedData.slice(0,16)
+    const encrypted = encryptedData.slice(16)
+    const decipher = crypto.createDecipheriv(this.#ALGORITHM, this.key, Buffer.from(iv))
+    let decrypted = decipher.update(encrypted, this.#OUTPUT_ENCODING, this.#INPUT_ENCODING)
+    decrypted += decipher.final(this.#INPUT_ENCODING)
 
-    return new TextDecoder().decode(decrypted)
+    return decrypted
   }
 }
 
