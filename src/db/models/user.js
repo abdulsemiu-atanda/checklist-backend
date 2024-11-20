@@ -16,11 +16,11 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       User.belongsTo(models.Role, {
-          foreignKey: {
-            allowNull: false,
-          },
-          onDelete: 'CASCADE'
-        })
+        foreignKey: {
+          allowNull: false,
+        },
+        onDelete: 'CASCADE'
+      })
     }
   }
   User.init({
