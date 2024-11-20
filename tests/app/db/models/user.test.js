@@ -35,7 +35,7 @@ describe('User Model:', () => {
     user.save().then(record => {
       expect(record.firstName).to.equal(attributes.firstName)
       expect(record.lastName).to.equal(attributes.lastName)
-      expect(record.email).to.equal(attributes.email)
+      expect(record.email).to.equal(attributes.email.toLowerCase())
       expect(record.RoleId).to.equal(role.id)
       expect(bcrypt.compareSync(attributes.password, record.password)).to.equal(true)
 
