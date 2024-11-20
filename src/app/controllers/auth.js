@@ -11,14 +11,16 @@ import {CREATED, CONFLICT, UNPROCESSABLE, BAD_REQUEST, UNAUTHORIZED, OK} from '.
 
 const user = new DataService(db.User)
 const role = new DataService(db.Role)
-const EMAIL_REGEX = /^\S+@\S+$/g
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
 const auth = {
   create: (req, res) => {
-    if (EMAIL_REGEX.test(req.body.email)) {
+    const email = req.body.email.toLowerCase()
+
+    if (EMAIL_REGEX.test(email)) {
       role.show({name: USER}).then(record => {
         if (record) {
-          user.create({...req.body, RoleId: record.id}).then(([newUser, created]) => {
+          user.create({...req.body, email, RoleId: record.id}).then(([newUser, created]) => {
             if (created) {
               const token = jwt.sign({id: newUser.id, roleId: newUser.RoleId}, process.env.SECRET, {expiresIn: '1h'})
 
