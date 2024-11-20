@@ -39,7 +39,7 @@ const auth = {
   },
   login: (req, res) => {
     if (EMAIL_REGEX.test(req.body.email)) {
-      user.show({emailDigest: digest(req.body.email)}).then(record => {
+      user.show({emailDigest: digest(req.body.email.toLowerCase())}).then(record => {
         if (record) {
           if (bcrypt.compareSync(req.body.password, record.password)) {
             const token = jwt.sign({id: record.id, roleId: record.RoleId}, process.env.SECRET, {expiresIn: '1h'})
