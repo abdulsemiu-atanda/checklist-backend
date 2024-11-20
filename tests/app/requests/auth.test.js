@@ -7,6 +7,7 @@ import db from '../../../src/db/models'
 import {USER} from '../../../src/config/roles'
 import {fakeUser} from '../../fixtures'
 import {BAD_REQUEST, CONFLICT, CREATED, OK, UNAUTHORIZED, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
+import {ACCOUNT_CREATION_SUCCESS, INCOMPLETE_REQUEST, INCORRECT_EMAIL_PASSWORD, INVALID_EMAIL, LOGIN_SUCCESS, UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
 
 const role = new DataService(db.Role)
 
@@ -32,7 +33,7 @@ describe('Auth Controller', () => {
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(BAD_REQUEST)
-          expect(response.body.message).to.equal('Invalid Email')
+          expect(response.body.message).to.equal(INVALID_EMAIL)
 
           done()
         })
@@ -44,7 +45,7 @@ describe('Auth Controller', () => {
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(UNPROCESSABLE)
-          expect(response.body.message).to.equal('Unable to process request. Please try again later.')
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
 
           done()
         })
@@ -59,7 +60,7 @@ describe('Auth Controller', () => {
           .end((error, response) => {
             expect(error).to.not.exist
             expect(response.statusCode).to.equal(CREATED)
-            expect(response.body.message).to.equal('User successfully created.')
+            expect(response.body.message).to.equal(ACCOUNT_CREATION_SUCCESS)
             expect(response.body.token).to.exist
 
             done()
@@ -73,7 +74,7 @@ describe('Auth Controller', () => {
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(CONFLICT)
-          expect(response.body.message).to.equal('Unable to complete request.')
+          expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
 
           done()
         })
@@ -87,7 +88,7 @@ describe('Auth Controller', () => {
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(UNAUTHORIZED)
-          expect(response.body.message).to.equal('Email and/or password incorrect')
+          expect(response.body.message).to.equal(INCORRECT_EMAIL_PASSWORD)
 
           done()
         })
@@ -99,7 +100,7 @@ describe('Auth Controller', () => {
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(UNAUTHORIZED)
-          expect(response.body.message).to.equal('Email and/or password incorrect')
+          expect(response.body.message).to.equal(INCORRECT_EMAIL_PASSWORD)
 
           done()
         })
@@ -111,7 +112,7 @@ describe('Auth Controller', () => {
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(UNAUTHORIZED)
-          expect(response.body.message).to.equal('Email and/or password incorrect')
+          expect(response.body.message).to.equal(INCORRECT_EMAIL_PASSWORD)
 
           done()
         })
@@ -123,7 +124,7 @@ describe('Auth Controller', () => {
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(UNAUTHORIZED)
-          expect(response.body.message).to.equal('Email and/or password incorrect')
+          expect(response.body.message).to.equal(INCORRECT_EMAIL_PASSWORD)
 
           done()
         })
@@ -135,7 +136,7 @@ describe('Auth Controller', () => {
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(OK)
-          expect(response.body.message).to.equal('Login Successful')
+          expect(response.body.message).to.equal(LOGIN_SUCCESS)
           expect(response.body.user.email).to.equal(fakeUser.email.toLowerCase())
           expect(response.body.user.firstName).to.equal(fakeUser.firstName)
           expect(response.body.user.lastName).to.equal(fakeUser.lastName)
