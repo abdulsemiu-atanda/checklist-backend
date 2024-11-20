@@ -63,4 +63,18 @@ describe('User Model:', () => {
       done()
     })
   })
+
+  it('does not create a user without a role', done => {
+    User.create(attributes).then(record => {
+      expect(record).to.not.exist
+
+      done()
+    }).catch(({errors}) => {
+      const [error] = errors
+
+      expect(error.message).to.equal('User.RoleId cannot be null')
+
+      done()
+    })
+  })
 })
