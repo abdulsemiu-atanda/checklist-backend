@@ -1,22 +1,15 @@
 import bcrypt from 'bcrypt'
 import {expect} from 'chai'
-import {fakerYO_NG} from '@faker-js/faker'
 
 import db from '../../../../src/db/models'
 import * as roleNames from '../../../../src/config/roles'
+import {fakeUser as attributes} from '../../../fixtures'
 
 const Role = db.Role
 const User = db.User
 
 let role
 let user
-
-const attributes = {
-  email: fakerYO_NG.internet.email(),
-  firstName: fakerYO_NG.person.firstName(),
-  lastName: fakerYO_NG.person.lastName(),
-  password: fakerYO_NG.internet.password()
-}
 
 describe('User Model:', () => {
   before(done => {
