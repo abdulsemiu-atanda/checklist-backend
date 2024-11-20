@@ -1,27 +1,18 @@
-import crypto from 'crypto'
-
 class EncryptionService {
-  #DIGEST_ALGORITHM = 'SHA-256'
   key
 
   constructor(key) {
-    if (typeof key !== 'string')
-      throw new TypeError('Invalid initialization parameters, expect key: [String].')
+    if (typeof key !== 'string' || key.length !== 32)
+      throw new TypeError('Invalid initialization parameters, expect key: [String] with length 32.')
 
-    this.key = new TextEncoder().encode(key)
+    this.key = Buffer.from(key)
   }
 
-  async digest() {
-    const digest = await crypto.subtle.digest(this.#DIGEST_ALGORITHM, this.key)
-
-    return digest
-  }
-
-  async encrypt(data) {
+  encrypt() {
     throw new ReferenceError('encrypt is undefined')
   }
 
-  async decrypt(encryptedData) {
+  decrypt() {
     throw new ReferenceError('decrypt is undefined')
   }
 }
