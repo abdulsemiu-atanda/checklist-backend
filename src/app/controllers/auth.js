@@ -5,6 +5,7 @@ import DataService from '../services/DataService'
 import db from '../../db/models'
 import {formatData} from '../../util/dataTools'
 import {digest} from '../../util/cryptTools'
+import logger from '../constants/logger'
 
 import {USER} from '../../config/roles'
 import {CREATED, CONFLICT, UNPROCESSABLE, BAD_REQUEST, UNAUTHORIZED, OK} from '../constants/statusCodes'
@@ -29,7 +30,7 @@ const auth = {
           }).catch(({errors}) => {
             const [error] = errors
 
-            console.error(error.message)
+            logger.error(error.message)
             res.status(CONFLICT).send({message: 'Unable to complete request.'})
           })
         } else {
