@@ -1,11 +1,11 @@
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
 
 import DataService from '../services/DataService'
 import db from '../../db/models'
 import {formatData} from '../../util/dataTools'
 import {digest} from '../../util/cryptTools'
 import logger from '../constants/logger'
+import {userToken} from '../../util/authTools'
 
 import {USER} from '../../config/roles'
 import {CREATED, CONFLICT, UNPROCESSABLE, BAD_REQUEST, UNAUTHORIZED, OK} from '../constants/statusCodes'
@@ -21,7 +21,7 @@ const auth = {
       role.show({name: USER}).then(record => {
         if (record) {
           user.create({...req.body, RoleId: record.id}).then(([newUser]) => {
-            const token = jwt.sign({id: newUser.id, roleId: newUser.RoleId}, process.env.SECRET, {expiresIn: '1h'})
+            const token = userToken(newUser.toJSON())
 
             res.status(CREATED).send({message: ACCOUNT_CREATION_SUCCESS, token})
           }).catch(({errors}) => {
@@ -43,7 +43,7 @@ const auth = {
       user.show({emailDigest: digest(req.body.email.toLowerCase())}).then(record => {
         if (record) {
           if (bcrypt.compareSync(req.body.password, record.password)) {
-            const token = jwt.sign({id: record.id, roleId: record.RoleId}, process.env.SECRET, {expiresIn: '1h'})
+            const token = userToken(record.toJSON())
 
             res.status(OK).send({
               message: LOGIN_SUCCESS,
