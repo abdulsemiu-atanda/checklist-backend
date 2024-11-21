@@ -7,12 +7,16 @@
   },
   "main": "index.js",
   "scripts": {
+    "build": "yarn babel src --out-dir dist --source-maps inline --ignore 'src/db/migrations/*','src/db/seeders/*'",
+    "clean": "rm -rf dist/",
     "pretest": "NODE_ENV=test yarn sequelize-cli db:migrate",
     "dev": "NODE_ENV=development nodemon ./src/index.js --exec babel-node",
+    "start": "node dist/index.js",
     "test": "NODE_ENV=test babel-node node_modules/.bin/nyc mocha",
     "prepare:db": "yarn sequelize-cli db:migrate && yarn sequelize-cli db:seed:all",
     "clean:db": "yarn sequelize-cli db:seed:undo:all && yarn sequelize-cli db:migrate:undo:all",
-    "setup:admin": "yarn babel-node src/setup/adminSetup.js"
+    "setup:admin": "node dist/setup/adminSetup.js",
+    "setup:admin:dev": "yarn babel-node src/setup/adminSetup.js"
   },
   "repository": "https://github.com/abdulsemiu-atanda/checklist-backend.git",
   "author": "Abdulsemiu Atanda <semiu@live.com>",
