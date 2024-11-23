@@ -20,15 +20,19 @@ const auth = {
     if (EMAIL_REGEX.test(req.body.email)) {
       role.show({name: USER}).then(record => {
         if (record) {
-          user.create({...req.body, RoleId: record.id}).then(([newUser]) => {
-            const token = userToken(newUser.toJSON())
+          user.create({emailDigest: digest(req.body.email.toLowerCase()), ...req.body, RoleId: record.id}).then(([newUser, created]) => {
+            if (created) {
+              const token = userToken(newUser.toJSON())
 
-            res.status(CREATED).send({message: ACCOUNT_CREATION_SUCCESS, token})
+              res.status(CREATED).send({message: ACCOUNT_CREATION_SUCCESS, token})
+            } else {
+              res.status(CONFLICT).send({message: INCOMPLETE_REQUEST})
+            }
           }).catch(({errors}) => {
             const [error] = errors
 
             logger.error(error.message)
-            res.status(CONFLICT).send({message: INCOMPLETE_REQUEST})
+            res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST})
           })
         } else {
           res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST})
