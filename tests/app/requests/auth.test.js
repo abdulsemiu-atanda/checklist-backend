@@ -5,7 +5,7 @@ import app from '../../../src/app'
 import DataService from '../../../src/app/services/DataService'
 import db from '../../../src/db/models'
 import {USER} from '../../../src/config/roles'
-import {fakeUser} from '../../fixtures'
+import {fakeUser, invalidUser} from '../../fixtures'
 import {BAD_REQUEST, CONFLICT, CREATED, OK, UNAUTHORIZED, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
 import {ACCOUNT_CREATION_SUCCESS, INCOMPLETE_REQUEST, INCORRECT_EMAIL_PASSWORD, INVALID_EMAIL, LOGIN_SUCCESS, UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
 
@@ -75,6 +75,18 @@ describe('Auth Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(CONFLICT)
           expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('returns unprocessable when required attribute is missing', done => {
+      request(app)
+        .post('/api/auth/sign-up').send(invalidUser)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
 
           done()
         })

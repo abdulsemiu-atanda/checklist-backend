@@ -6,3 +6,9 @@ export const fakeUser = {
   lastName: faker.person.lastName(),
   password: faker.internet.password()
 }
+
+export const invalidUser = {
+  email: faker.internet.email(),
+  firstName: faker.person.firstName(),
+  lastName: faker.person.lastName(),
+}
