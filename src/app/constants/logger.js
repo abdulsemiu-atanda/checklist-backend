@@ -1,8 +1,6 @@
 import winston from 'winston'
 
-const level = process.env.NODE_ENV === 'development' ? 'debug' : 'info'
-
 export default winston.createLogger({
-  transports: [new winston.transports.Console({level})],
+  transports: [new winston.transports.Console({level: process.env.JS_LOG || 'info'})],
   format: winston.format.simple()
 })
