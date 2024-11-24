@@ -32,6 +32,7 @@
     "graceful": "^1.1.0",
     "inquirer": "^12.1.0",
     "jsonwebtoken": "^9.0.2",
+    "marked": "^15.0.2",
     "morgan": "^1.10.0",
     "pg": "^8.13.1",
     "pg-hstore": "^2.3.4",
