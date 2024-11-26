@@ -27,11 +27,11 @@ describe('dataTools;', () => {
       expect(Object.keys(formattedData)).to.have.length(2)
     })
 
-    it('returns an empty object when attributes are non-existing', () => {
+    it('returns provided object when attributes are non-existing', () => {
       const person = {name: 'Lateefat', age: '22', city: 'Lagos'}
       const formattedData = formatData(person, ['country', 'hobbies'])
 
-      expect(formattedData).to.eql({})
+      expect(formattedData).to.deep.eql(person)
     })
   })
 })
