@@ -1,12 +1,8 @@
 export const formatData = (data, attributes = []) => {
-  if (attributes.length === 0) {
+  const existingAttributes = attributes.filter(property => Object.keys(data).includes(property))
+
+  if (attributes.length === 0 || existingAttributes.length === 0)
     return data
-  } else {
-    return attributes.reduce((accumulator, key) => {
-      if (data[key])
-        return {...accumulator, [key]: data[key]}
-      else
-        return accumulator
-    }, {})
-  }
+  else
+    return existingAttributes.reduce((accumulator, key) => ({...accumulator, [key]: data[key]}), {})
 }

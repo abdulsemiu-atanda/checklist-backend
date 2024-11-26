@@ -3,7 +3,18 @@ import pluginJs from '@eslint/js'
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
-  {ignores: ['tests/*', 'src/db/models/index.js', 'src/db/migrations/*', 'src/db/seeders/*', '*.config.js', 'test.js']},
+  {
+    ignores: [
+      'tests/*',
+      'src/db/models/index.js',
+      'src/db/migrations/*',
+      'src/db/seeders/*',
+      '*.config.js',
+      'test.js',
+      'src/setup/*',
+      'dist/*'
+    ]
+  },
   {files: ['src/app/**/*.js'], languageOptions: { sourceType: 'commonjs' }},
   {
     languageOptions: {

@@ -10,6 +10,7 @@ const app = express()
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
+app.disable('x-powered-by')
 app.use(morgan('tiny'))
 
 fs.readdirSync(`${__dirname}/routes/`)
@@ -20,6 +21,12 @@ fs.readdirSync(`${__dirname}/routes/`)
 
     app.use(`/api/${dasherizeCamelCase(namespace)}`, routes)
   })
+
+if (process.env.NODE_ENV === 'development') {
+  const {setupDevServer} = require('../util/serverTools')
+
+  setupDevServer(app)
+}
 
 app.get('*', (req, res) => res.status(200).send({
   message: 'Welcome to Checklist API',
