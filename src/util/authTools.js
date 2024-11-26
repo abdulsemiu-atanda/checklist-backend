@@ -5,3 +5,5 @@ export const userToken = (user, expiresIn = '1h') => jwt.sign(
   process.env.SECRET,
   {expiresIn}
 )
+
+export const verifyToken = token => jwt.verify(token, process.env.SECRET)
