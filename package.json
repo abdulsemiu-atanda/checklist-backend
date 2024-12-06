@@ -34,9 +34,11 @@
     "jsonwebtoken": "^9.0.2",
     "marked": "^15.0.2",
     "morgan": "^1.10.0",
+    "nodemailer": "^6.9.16",
     "pg": "^8.13.1",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.5",
+    "tweetnacl-util": "^0.15.1",
     "uuid": "^11.0.2",
     "winston": "^3.17.0"
   },
@@ -52,14 +54,11 @@
     "eslint": "^9.15.0",
     "express-list-endpoints": "^7.1.1",
     "globals": "^15.12.0",
-    "http-proxy-middleware": "^2.0.7",
-    "maildev": "^2.1.0",
     "mocha": "^10.8.2",
     "nodemon": "^3.1.7",
     "nyc": "^17.1.0",
     "sequelize-cli": "^6.6.2",
-    "supertest": "^7.0.0",
-    "tweetnacl-util": "^0.15.1"
+    "supertest": "^7.0.0"
   },
   "engines": {
     "node": ">=20.9.0",
