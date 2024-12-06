@@ -51,7 +51,6 @@
     "@faker-js/faker": "^9.2.0",
     "chai": "^4.5.0",
     "cli-table": "^0.3.11",
-    "coveralls": "^3.1.1",
     "eslint": "^9.15.0",
     "express-list-endpoints": "^7.1.1",
     "globals": "^15.12.0",
