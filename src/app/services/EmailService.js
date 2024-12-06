@@ -7,9 +7,7 @@ class EmailService {
 
   constructor(config) {
     if (!EmailService.instance) {
-      const {auth, host, port} = config
-
-      this.transporter = nodemailer.createTransport({host, port, auth})
+      this.transporter = nodemailer.createTransport(config)
       EmailService.instance = this
     }
 
