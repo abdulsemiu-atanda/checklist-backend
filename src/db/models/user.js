@@ -2,10 +2,13 @@ import bcrypt from 'bcrypt'
 import {Model} from 'sequelize'
 
 import SymmetricEncryptionService from '../../app/services/SymmetricEncryptionService'
+import confirmUserEmail from '../../app/mailers/confirmUserEmail'
 import {digest} from '../../util/cryptTools'
 import {generateCode} from '../../util/authTools'
+import {smtpServer} from '../../util/tools'
 
 const encryption = new SymmetricEncryptionService(process.env.DATA_ENCRYPTION_KEY)
+const smtp = smtpServer()
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
@@ -75,7 +78,10 @@ export default (sequelize, DataTypes) => {
   }, {
     hooks: {
       afterCreate(user) {
-        user.createConfirmation({code: generateCode()})
+        const code = generateCode()
+
+        user.createConfirmation({code})
+        smtp.delay(3000).send(confirmUserEmail(user.toJSON(), code))
       }
     },
     sequelize,
