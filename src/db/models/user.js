@@ -21,6 +21,7 @@ export default (sequelize, DataTypes) => {
         },
         onDelete: 'CASCADE'
       })
+      User.hasOne(models.Confirmation)
     }
   }
   User.init({
