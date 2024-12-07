@@ -74,7 +74,8 @@ export default (sequelize, DataTypes) => {
     RoleId: {
       allowNull: false,
       type: DataTypes.UUID,
-    }
+    },
+    confirmedAt: DataTypes.DATE
   }, {
     hooks: {
       afterCreate(user) {
