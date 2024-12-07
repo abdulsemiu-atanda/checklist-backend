@@ -16,6 +16,9 @@ class EmailService {
 
   send(email) {
     return this.transporter.sendMail(email, (error, info) => {
+      if (!error && process.env.NODE_ENV === 'development')
+        logger.info(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`)
+
       if (error)
         logger.error(error.message)
       else
@@ -25,7 +28,7 @@ class EmailService {
 
   delay(timeout) {
     return {
-      send(email) { setTimeout(() => { this.send(email) }, timeout) }
+      send: email => { setTimeout(() => this.send(email), timeout) }
     }
   }
 }
