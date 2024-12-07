@@ -22,6 +22,12 @@ class EmailService {
         logger.info(`Message sent: ${info.messageId}`)
     })
   }
+
+  delay(timeout) {
+    return {
+      send(email) { setTimeout(() => { this.send(email) }, timeout) }
+    }
+  }
 }
 
 export default EmailService
