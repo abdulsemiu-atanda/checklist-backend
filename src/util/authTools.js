@@ -7,3 +7,13 @@ export const userToken = (user, expiresIn = '1h') => jwt.sign(
 )
 
 export const verifyToken = token => jwt.verify(token, process.env.SECRET)
+
+export const generateCode = (size = 6, code = '') => {
+  const digits = '0123456789'
+  const position = Math.floor(Math.random() * 10)
+
+  if (code.length === size)
+    return code
+  else
+    return generateCode(size, `${code}${digits[position]}`)
+}

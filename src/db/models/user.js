@@ -3,6 +3,7 @@ import {Model} from 'sequelize'
 
 import SymmetricEncryptionService from '../../app/services/SymmetricEncryptionService'
 import {digest} from '../../util/cryptTools'
+import {generateCode} from '../../util/authTools'
 
 const encryption = new SymmetricEncryptionService(process.env.DATA_ENCRYPTION_KEY)
 
@@ -72,6 +73,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.UUID,
     }
   }, {
+    hooks: {
+      afterCreate(user) {
+        user.createConfirmation({code: generateCode()})
+      }
+    },
     sequelize,
     modelName: 'User',
   })
