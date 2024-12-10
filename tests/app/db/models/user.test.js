@@ -55,6 +55,18 @@ describe('User Model:', () => {
     })
   })
 
+  it('throws an error when trying to update virtual attribute', done => {
+    user.update({confirmed: true}).then(updated => {
+      expect(updated).to.not.exist
+
+      done()
+    }).catch(error => {
+      expect(error.message).to.equal('Do not try to set the `confirmed` value!')
+
+      done()
+    })
+  })
+
   it('does not create user with existing email', done => {
     User.create({...attributes, RoleId: role.id}).then(record => {
       expect(record).to.not.exist
