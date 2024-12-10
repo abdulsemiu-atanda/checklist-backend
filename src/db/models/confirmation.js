@@ -2,6 +2,7 @@ import {Model} from 'sequelize'
 
 import {CONFIRMED, PENDING} from '../../app/constants/confirmationStatus'
 import SymmetricEncryptionService from '../../app/services/SymmetricEncryptionService'
+import {digest} from '../../util/cryptTools'
 
 const encryption = new SymmetricEncryptionService(process.env.DATA_ENCRYPTION_KEY)
 
@@ -34,7 +35,12 @@ export default (sequelize, DataTypes) => {
       get() { return encryption.decrypt(this.getDataValue('code')) },
       set(value) {
         this.setDataValue('code', encryption.encrypt(value))
+        this.setDataValue('codeDigest', digest(value))
       }
+    },
+    codeDigest: {
+      allowNull: false,
+      type: DataTypes.STRING
     },
     status: {
       allowNull: false,

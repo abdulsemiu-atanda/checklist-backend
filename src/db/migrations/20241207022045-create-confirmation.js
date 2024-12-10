@@ -15,6 +15,10 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING
       },
+      codeDigest: {
+        allowNull: false,
+        type: Sequelize.STRING
+      },
       status: {
         allowNull: false,
         type: Sequelize.ENUM(CONFIRMED, PENDING)
