@@ -75,7 +75,16 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.UUID,
     },
-    confirmedAt: DataTypes.DATE
+    confirmedAt: DataTypes.DATE,
+    confirmed: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return !!this.getDataValue('confirmedAt')
+      },
+      set() {
+        throw new Error('Do not try to set the `confirmed` value!')
+      }
+    }
   }, {
     hooks: {
       afterCreate(user) {
