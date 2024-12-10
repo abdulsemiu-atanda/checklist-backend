@@ -3,4 +3,5 @@ exclude:
   - src/db/config/*
   - src/db/models/index.js
   - src/config/*
+  - src/app/index.js
   - tests/*
