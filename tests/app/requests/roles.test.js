@@ -4,7 +4,7 @@ import request from 'supertest'
 import app from '../../../src/app'
 import DataService from '../../../src/app/services/DataService'
 import db from '../../../src/db/models'
-import {BAD_REQUEST, OK, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
+import {OK, UNAUTHORIZED, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
 import {INCOMPLETE_REQUEST, UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
 import {ADMIN, USER} from '../../../src/config/roles'
 import {adminUser, fakeUser} from '../../fixtures'
@@ -67,7 +67,7 @@ describe('Roles Controller', () => {
         .set('Authorization', userToken)
         .end((error, response) => {
           expect(error).to.not.exist
-          expect(response.statusCode).to.equal(BAD_REQUEST)
+          expect(response.statusCode).to.equal(UNAUTHORIZED)
           expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
 
           done()

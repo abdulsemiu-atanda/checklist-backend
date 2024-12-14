@@ -2,7 +2,7 @@ import {ADMIN} from '../../config/roles'
 import DataService from '../services/DataService'
 import db from '../../db/models'
 import logger from '../constants/logger'
-import {BAD_REQUEST, UNPROCESSABLE} from '../constants/statusCodes'
+import {UNAUTHORIZED, UNPROCESSABLE} from '../constants/statusCodes'
 import {INCOMPLETE_REQUEST, UNPROCESSABLE_REQUEST} from '../constants/messages'
 import {verifyToken} from '../../util/authTools'
 
@@ -30,7 +30,7 @@ const auth = {
         if (record && record.name === ADMIN) 
           next()
         else
-          res.status(BAD_REQUEST).send({message: INCOMPLETE_REQUEST})
+          res.status(UNAUTHORIZED).send({message: INCOMPLETE_REQUEST})
       })
     } catch (error) {
       logger.error(error.message)
