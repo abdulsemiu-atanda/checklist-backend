@@ -152,6 +152,7 @@ describe('Auth Controller', () => {
           expect(response.body.user.email).to.equal(fakeUser.email.toLowerCase())
           expect(response.body.user.firstName).to.equal(fakeUser.firstName)
           expect(response.body.user.lastName).to.equal(fakeUser.lastName)
+          expect(response.body.user.confirmed).to.equal(false)
 
           done()
         })
