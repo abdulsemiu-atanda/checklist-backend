@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import DataService from '../services/DataService'
 import db from '../../db/models'
 import {formatData} from '../../util/dataTools'
+import {dateToISOString} from '../../util/tools'
 import {digest} from '../../util/cryptTools'
 import logger from '../constants/logger'
 import {userToken} from '../../util/authTools'
@@ -17,6 +18,7 @@ import {
   OK
 } from '../constants/statusCodes'
 import {
+  ACCOUNT_CONFIRMED,
   ACCOUNT_CREATION_SUCCESS,
   INCOMPLETE_REQUEST,
   INCORRECT_EMAIL_PASSWORD,
@@ -25,6 +27,7 @@ import {
   UNPROCESSABLE_REQUEST
 } from '../constants/messages'
 
+const confirmation = new DataService(db.Confirmation)
 const user = new DataService(db.User)
 const role = new DataService(db.Role)
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
