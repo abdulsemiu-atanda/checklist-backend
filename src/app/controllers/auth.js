@@ -74,7 +74,7 @@ const auth = {
               res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
             })
         } else {
-          res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+          res.status(BAD_REQUEST).send({message: INCOMPLETE_REQUEST, success: false})
         }
       })
       .catch(error => {
