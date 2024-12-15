@@ -60,31 +60,28 @@ const auth = {
     }
   },
   confirm: (req, res) => {
-    confirmation.show({codeDigest: digest(req.body.code)})
-      .then(record => {
-        if (record) {
-          record.getUser()
-            .then(confirmed => {
-              confirmed.update({confirmedAt: dateToISOString(Date.now())})
-                .then(() => {
-                  confirmation.destroy(record.id)
+    try {
+      confirmation.show({codeDigest: digest(req.body.code)})
+        .then(record => {
+          if (record) {
+            record.getUser()
+              .then(confirmed => {
+                confirmed.update({confirmedAt: dateToISOString(Date.now())})
+                  .then(() => {
+                    confirmation.destroy(record.id)
+  
+                    res.status(OK).send({message: ACCOUNT_CONFIRMED, success: true})
+                  })
+              })
+          } else {
+            res.status(BAD_REQUEST).send({message: INCOMPLETE_REQUEST, success: false})
+          }
+        })
+    } catch (error) {
+      logger.error(error.message)
 
-                  res.status(OK).send({message: ACCOUNT_CONFIRMED, success: true})
-                })
-            }).catch(error => {
-              logger.error(error.message)
-
-              res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
-            })
-        } else {
-          res.status(BAD_REQUEST).send({message: INCOMPLETE_REQUEST, success: false})
-        }
-      })
-      .catch(error => {
-        logger.error(error.message)
-
-        res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
-      })
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+    }
   },
   login: (req, res) => {
     if (EMAIL_REGEX.test(req.body.email)) {
