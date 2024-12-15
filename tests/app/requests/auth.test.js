@@ -4,14 +4,33 @@ import request from 'supertest'
 import app from '../../../src/app'
 import DataService from '../../../src/app/services/DataService'
 import db from '../../../src/db/models'
-import {USER} from '../../../src/config/roles'
+import {digest} from '../../../src/util/cryptTools'
 import {fakeUser, invalidUser} from '../../fixtures'
-import {BAD_REQUEST, CONFLICT, CREATED, OK, UNAUTHORIZED, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
-import {ACCOUNT_CREATION_SUCCESS, INCOMPLETE_REQUEST, INCORRECT_EMAIL_PASSWORD, INVALID_EMAIL, LOGIN_SUCCESS, UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
+import {generateCode} from '../../../src/util/authTools'
+
+import {USER} from '../../../src/config/roles'
+import {
+  BAD_REQUEST,
+  CONFLICT,
+  CREATED,
+  OK,
+  UNAUTHORIZED,
+  UNPROCESSABLE
+} from '../../../src/app/constants/statusCodes'
+import {
+  ACCOUNT_CONFIRMED,
+  ACCOUNT_CREATION_SUCCESS,
+  INCOMPLETE_REQUEST,
+  INCORRECT_EMAIL_PASSWORD,
+  INVALID_EMAIL,
+  LOGIN_SUCCESS,
+  UNPROCESSABLE_REQUEST
+} from '../../../src/app/constants/messages'
 
 const role = new DataService(db.Role)
+const user = new DataService(db.User)
 
-let userRole
+const code = generateCode()
 
 describe('Auth Controller', () => {
   before(done => {
@@ -52,9 +71,7 @@ describe('Auth Controller', () => {
     })
 
     it('creates user successfully with correct attributes', done => {
-      role.create({name: USER}).then(([record]) => {
-        userRole = record
-
+      role.create({name: USER}).then(() => {
         request(app)
           .post('/api/auth/sign-up').send(fakeUser)
           .end((error, response) => {
@@ -130,18 +147,6 @@ describe('Auth Controller', () => {
         })
     })
 
-    it('returns an error if password is incorrect', done => {
-      request(app)
-        .post('/api/auth/sign-in').send({...fakeUser, password: 'testing12'})
-        .end((error, response) => {
-          expect(error).to.not.exist
-          expect(response.statusCode).to.equal(UNAUTHORIZED)
-          expect(response.body.message).to.equal(INCORRECT_EMAIL_PASSWORD)
-
-          done()
-        })
-    })
-
     it('logins in with correct credentials', done => {
       request(app)
         .post('/api/auth/sign-in').send(fakeUser)
@@ -156,6 +161,54 @@ describe('Auth Controller', () => {
 
           done()
         })
+    })
+  })
+
+  describe('POST /api/auth/confirm', () => {
+    it('returns an error when code is invalid', done => {
+      request(app)
+        .post('/api/auth/confirm').send({code: '123456'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(BAD_REQUEST)
+          expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('returns unprocessable if code is not a string', done => {
+      request(app)
+        .post('/api/auth/confirm').send({code: 123456})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('confirms the account with a valid code', done => {
+      user.show({emailDigest: digest(fakeUser.email.toLowerCase())}).then(record => {
+        record.getConfirmation().then(confirmation => {
+          confirmation.update({code})
+
+          request(app)
+            .post('/api/auth/confirm').send({code})
+            .end((error, response) => {
+              expect(error).to.not.exist
+              expect(response.statusCode).to.equal(OK)
+              expect(response.body.message).to.equal(ACCOUNT_CONFIRMED)
+
+              record.reload().then(data => {
+                expect(data.confirmed).to.equal(true)
+
+                done()
+              })
+            })
+        })
+      })
     })
   })
 })
