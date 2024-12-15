@@ -1,6 +1,5 @@
 import {Model} from 'sequelize'
 
-import {CONFIRMED, PENDING} from '../../app/constants/confirmationStatus'
 import SymmetricEncryptionService from '../../app/services/SymmetricEncryptionService'
 import {digest} from '../../util/cryptTools'
 
@@ -41,11 +40,6 @@ export default (sequelize, DataTypes) => {
     codeDigest: {
       allowNull: false,
       type: DataTypes.STRING
-    },
-    status: {
-      allowNull: false,
-      type: DataTypes.ENUM(CONFIRMED, PENDING),
-      defaultValue: PENDING
     },
     UserId: {
       allowNull: false,

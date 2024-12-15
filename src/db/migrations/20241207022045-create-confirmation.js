@@ -1,6 +1,4 @@
 'use strict';
-import {CONFIRMED, PENDING} from '../../app/constants/confirmationStatus'
-
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -18,10 +16,6 @@ module.exports = {
       codeDigest: {
         allowNull: false,
         type: Sequelize.STRING
-      },
-      status: {
-        allowNull: false,
-        type: Sequelize.ENUM(CONFIRMED, PENDING)
       },
       UserId: {
         allowNull: false,
