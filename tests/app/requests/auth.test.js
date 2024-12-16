@@ -191,8 +191,8 @@ describe('Auth Controller', () => {
 
     it('confirms the account with a valid code', done => {
       user.show({emailDigest: digest(fakeUser.email.toLowerCase())}).then(record => {
-        record.getConfirmation().then(confirmation => {
-          confirmation.update({code})
+        record.getConfirmation().then(async confirmation => {
+          await confirmation.update({code})
 
           request(app)
             .post('/api/auth/confirm').send({code})
