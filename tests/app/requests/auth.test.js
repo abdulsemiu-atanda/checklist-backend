@@ -5,7 +5,7 @@ import app from '../../../src/app'
 import DataService from '../../../src/app/services/DataService'
 import db from '../../../src/db/models'
 import {digest} from '../../../src/util/cryptTools'
-import {fakeUser, invalidUser} from '../../fixtures'
+import {fakeUser, invalidUser} from '../../fixtures/users'
 import {generateCode} from '../../../src/util/authTools'
 
 import {USER} from '../../../src/config/roles'

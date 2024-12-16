@@ -7,7 +7,7 @@ import db from '../../../src/db/models'
 import {OK, UNAUTHORIZED, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
 import {INCOMPLETE_REQUEST, UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
 import {ADMIN, USER} from '../../../src/config/roles'
-import {adminUser, fakeUser} from '../../fixtures'
+import {adminUser, fakeUser} from '../../fixtures/users'
 
 const role = new DataService(db.Role)
 const user = new DataService(db.User)

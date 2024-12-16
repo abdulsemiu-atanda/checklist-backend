@@ -3,7 +3,7 @@ import {v4 as uuidV4} from 'uuid'
 
 import db from '../../../../src/db/models'
 import {USER} from '../../../../src/config/roles'
-import {fakeUser} from '../../../fixtures'
+import {fakeUser} from '../../../fixtures/users'
 import {generateCode} from '../../../../src/util/authTools'
 
 const Role = db.Role

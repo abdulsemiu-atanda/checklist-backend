@@ -4,7 +4,7 @@ import {expect} from 'chai'
 import {dateToISOString} from '../../../../src/util/tools'
 import db from '../../../../src/db/models'
 import * as roleNames from '../../../../src/config/roles'
-import {fakeUser as attributes} from '../../../fixtures'
+import {fakeUser as attributes} from '../../../fixtures/users'
 import {smtpStub} from '../../../testHelpers'
 
 const Role = db.Role
