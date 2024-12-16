@@ -1,5 +1,10 @@
 import jwt from 'jsonwebtoken'
 
+import DataService from '../app/services/DataService'
+import db from '../db/models'
+import {ADMIN} from '../config/roles'
+import logger from '../app/constants/logger'
+
 export const userToken = (user, expiresIn = '1h') => jwt.sign(
   {id: user.id, roleId: user.RoleId},
   process.env.SECRET,
@@ -16,4 +21,16 @@ export const generateCode = (size = 6, code = '') => {
     return code
   else
     return generateCode(size, `${code}${digits[position]}`)
+}
+
+export const isAdmin = user => {
+  const role = new DataService(db.Role)
+
+  return role.show({id: user.roleId})
+    .then(record => record.name === ADMIN)
+    .catch(error => {
+      logger.error(error.message)
+
+      return false
+    })
 }
