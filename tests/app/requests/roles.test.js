@@ -83,8 +83,8 @@ describe('Roles Controller', () => {
       .end((error, response) => {
         expect(error).to.not.exist
         expect(response.statusCode).to.equal(OK)
-        expect(response.body.roles).to.have.lengthOf(2)
-        expect(response.body.roles.map(role => role.name)).to.deep.equal([USER, ADMIN])
+        expect(response.body.data).to.have.lengthOf(2)
+        expect(response.body.data.map(role => role.name)).to.deep.equal([USER, ADMIN])
 
         done()
       })
