@@ -23,7 +23,7 @@ describe('SymmetricEncryptionService', () => {
     })
 
     it('throw an error with an invalid passphrase', () => {
-      const symmetricService = new SymmetricEncryptionService('8cb97ba87758bb3ae136b9f3f4ac89fd')
+      const symmetricService = new SymmetricEncryptionService('b3stb4nd1nd4w0rld54ll0v3r0r4ng3s')
 
       expect(() => { symmetricService.decrypt(encrypted) }).to.throw(/bad decrypt/)
     })
