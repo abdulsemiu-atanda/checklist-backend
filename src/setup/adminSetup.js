@@ -39,8 +39,7 @@ inquirer.prompt(questions).then(answers => {
       user.create({...answers, roleId: record.id}).then(([_, created]) => {
         if (created)
           logger.info('Admin user successfully created')
-      }).catch(({errors}) => {
-        const [error] = errors
+      }).catch(error => {
 
         logger.error(error.message)
       })
