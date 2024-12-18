@@ -2,8 +2,9 @@ import bcrypt from 'bcrypt'
 
 import DataService from '../services/DataService'
 import db from '../../db/models'
+import confirmUserEmail from '../mailers/confirmUserEmail'
 import {formatData} from '../../util/dataTools'
-import {dateToISOString} from '../../util/tools'
+import {dateToISOString, smtpServer} from '../../util/tools'
 import {digest} from '../../util/cryptTools'
 import logger from '../constants/logger'
 import {userToken} from '../../util/authTools'
@@ -105,6 +106,24 @@ const auth = {
       })
     } else {
       res.status(UNAUTHORIZED).send({message: INCORRECT_EMAIL_PASSWORD, success: false})
+    }
+  },
+  resendConfirmation: (req, res) => {
+    if (EMAIL_REGEX.test(req.body.email)) {
+      user.show({emailDigest: digest(req.body.email.toLowerCase())}).then(record => {
+        if (record) {
+          record.getConfirmation().then(data => {
+            if (data)
+              smtpServer().delay(3000).send(confirmUserEmail(record.toJSON(), data.code))
+
+            res.status(OK).send({message: 'Account confirmation email sent.', success: true})
+          })
+        } else {
+          res.status(OK).send({message: 'Account confirmation email sent.', success: true})
+        }
+      })
+    } else {
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
     }
   }
 }
