@@ -23,7 +23,7 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'roleId',
         onDelete: 'CASCADE'
       })
-      User.hasOne(models.Confirmation)
+      User.hasOne(models.Confirmation, {foreignKey: 'userId'})
       User.hasMany(models.Token, {foreignKey: 'userId'})
     }
   }

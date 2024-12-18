@@ -79,7 +79,7 @@ describe('Users Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(OK)
           expect(response.body.data).to.have.lengthOf(12)
-          expect(response.body.data[0].RoleId).to.exist
+          expect(response.body.data[0].roleId).to.exist
 
           done()
         })
