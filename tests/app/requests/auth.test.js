@@ -1,10 +1,12 @@
 import {expect} from 'chai'
 import request from 'supertest'
+import {faker} from '@faker-js/faker'
 
 import app from '../../../src/app'
 import DataService from '../../../src/app/services/DataService'
 import db from '../../../src/db/models'
 import {digest} from '../../../src/util/cryptTools'
+import {create} from '../../fixtures'
 import {fakeUser, invalidUser} from '../../fixtures/users'
 import {generateCode} from '../../../src/util/authTools'
 
@@ -31,6 +33,7 @@ const role = new DataService(db.Role)
 const user = new DataService(db.User)
 
 const code = generateCode()
+const testUser = {...fakeUser, email: faker.internet.email()}
 
 describe('Auth Controller', () => {
   before(done => {
@@ -208,6 +211,58 @@ describe('Auth Controller', () => {
               })
             })
         })
+      })
+    })
+  })
+
+  describe('POST /api/auth/resend-confirmation', () => {
+    it('returns an error when email is invalid', done => {
+      request(app)
+        .post('/api/auth/resend-confirmation').send({email: 'example.com'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('returns success if email is valid', done => {
+      request(app)
+        .post('/api/auth/resend-confirmation').send({email: 'test@user.com'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.message).to.equal('Account confirmation email sent.')
+
+          done()
+        })
+    })
+
+    it('returns success for an already confirmed user', done => {
+      request(app)
+        .post('/api/auth/resend-confirmation').send(fakeUser)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.message).to.equal('Account confirmation email sent.')
+
+          done()
+        })
+    })
+
+    it('returns success for unconfirmed user', done => {
+      create({type: 'users', data: testUser}).then(() => {
+        request(app)
+          .post('/api/auth/resend-confirmation').send(testUser)
+          .end((error, response) => {
+            expect(error).to.not.exist
+            expect(response.statusCode).to.equal(OK)
+            expect(response.body.message).to.equal('Account confirmation email sent.')
+
+            done()
+          })
       })
     })
   })
