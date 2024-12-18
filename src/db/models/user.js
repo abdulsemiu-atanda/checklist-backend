@@ -26,6 +26,7 @@ export default (sequelize, DataTypes) => {
         onDelete: 'CASCADE'
       })
       User.hasOne(models.Confirmation)
+      User.hasMany(models.Token, {foreignKey: 'userId'})
     }
   }
   User.init({
