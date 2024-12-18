@@ -7,7 +7,8 @@ import {formatData} from '../../util/dataTools'
 import {dateToISOString, smtpServer} from '../../util/tools'
 import {digest} from '../../util/cryptTools'
 import logger from '../constants/logger'
-import {userToken} from '../../util/authTools'
+import {generateCode, userToken} from '../../util/authTools'
+import resetPasswordEmail from '../mailers/resetPasswordEmail'
 
 import {USER} from '../../config/roles'
 import {
@@ -16,7 +17,8 @@ import {
   UNPROCESSABLE,
   BAD_REQUEST,
   UNAUTHORIZED,
-  OK
+  OK,
+  ACCEPTED
 } from '../constants/statusCodes'
 import {
   ACCOUNT_CONFIRMED,
@@ -31,7 +33,9 @@ import {
 const confirmation = new DataService(db.Confirmation)
 const user = new DataService(db.User)
 const role = new DataService(db.Role)
+const token = new DataService(db.Token)
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const smtp = smtpServer()
 
 const auth = {
   create: (req, res) => {
@@ -114,7 +118,7 @@ const auth = {
         if (record) {
           record.getConfirmation().then(data => {
             if (data)
-              smtpServer().delay(3000).send(confirmUserEmail(record.toJSON(), data.code))
+              smtp.delay(3000).send(confirmUserEmail(record.toJSON(), data.code))
 
             res.status(OK).send({message: 'Account confirmation email sent.', success: true})
           })
@@ -125,6 +129,36 @@ const auth = {
     } else {
       res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
     }
+  },
+  resetPassword: (req, res) => {
+    if (EMAIL_REGEX.test(req.body.email)) {
+      user.show({emailDigest: digest(req.body.email.toLowerCase())}).then(record => {
+        if (record) {
+          record.createToken({value: digest(generateCode(8))}).then(data => {
+            smtp.delay(3000).send(resetPasswordEmail(record.toJSON(), data.value))
+
+            res.status(ACCEPTED).send({message: 'Password reset requested.', success: true})
+          }).catch(error => {
+            logger.error(error.message)
+
+            res.status(ACCEPTED).send({message: 'Password reset requested.', success: true})
+          })
+        } else {
+          res.status(ACCEPTED).send({message: 'Password reset requested.', success: true})
+        }
+      })
+    } else {
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+    }
+  },
+  validateResetToken: (req, res) => {
+    token.show({value: req.params.token}).then(record => {
+      res.status(OK).send({data: record?.id, success: true})
+    }).catch(error => {
+      logger.error(error.message)
+
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+    })
   }
 }
 
