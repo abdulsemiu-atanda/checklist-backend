@@ -38,7 +38,7 @@ const auth = {
     if (EMAIL_REGEX.test(req.body.email)) {
       role.show({name: USER}).then(record => {
         if (record) {
-          user.create({emailDigest: digest(req.body.email.toLowerCase()), ...req.body, RoleId: record.id}).then(([newUser, created]) => {
+          user.create({emailDigest: digest(req.body.email.toLowerCase()), ...req.body, roleId: record.id}).then(([newUser, created]) => {
             if (created) {
               const token = userToken(newUser.toJSON())
 

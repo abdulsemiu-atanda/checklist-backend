@@ -36,7 +36,7 @@ const questions = [
 inquirer.prompt(questions).then(answers => {
   role.show({name: ADMIN}).then(record => {
     if (record) {
-      user.create({...answers, RoleId: record.id}).then(([_, created]) => {
+      user.create({...answers, roleId: record.id}).then(([_, created]) => {
         if (created)
           logger.info('Admin user successfully created')
       }).catch(({errors}) => {
