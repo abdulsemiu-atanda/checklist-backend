@@ -9,9 +9,11 @@ import {digest} from '../../../src/util/cryptTools'
 import {create} from '../../fixtures'
 import {fakeUser, invalidUser} from '../../fixtures/users'
 import {generateCode} from '../../../src/util/authTools'
+import {smtpStub} from '../../testHelpers'
 
 import {USER} from '../../../src/config/roles'
 import {
+  ACCEPTED,
   BAD_REQUEST,
   CONFLICT,
   CREATED,
@@ -263,6 +265,76 @@ describe('Auth Controller', () => {
 
             done()
           })
+      })
+    })
+  })
+
+  describe('POST /api/auth/reset-password', () => {
+    it('returns an error if email is invalid', done => {
+      request(app)
+        .post('/api/auth/reset-password').send({email: 'test.com'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('return success if user does not exist', done => {
+      request(app)
+        .post('/api/auth/reset-password').send({email: 'test@example.com'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(ACCEPTED)
+          expect(response.body.message).to.equal('Password reset requested.')
+          expect(smtpStub.called).to.equal(false)
+
+          done()
+        })
+    })
+
+    it('successfully sends reset email if user exists', done => {
+      request(app)
+        .post('/api/auth/reset-password').send(testUser)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(ACCEPTED)
+          expect(response.body.message).to.equal('Password reset requested.')
+          expect(smtpStub.called).to.equal(true)
+
+          done()
+        })
+    })
+  })
+
+  describe('GET /api/auth/validate-reset-token/:token', () => {
+    it('does not return data when token is invalid', done => {
+      request(app)
+        .get('/api/auth/validate-reset-token/s1st3r')
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.data).to.not.exist
+
+          done()
+        })
+    })
+
+    it('returns token id if token is valid', done => {
+      user.show({emailDigest: digest(testUser.email.toLowerCase())}).then(record => {
+        record.getTokens().then(tokens => {
+          request(app)
+            .get(`/api/auth/validate-reset-token/${encodeURIComponent(tokens[0].value)}`)
+            .end((error, response) => {
+              expect(error).to.not.exist
+              expect(response.statusCode).to.equal(OK)
+              expect(response.body.data).to.equal(tokens[0].id)
+
+              done()
+            })
+        })
       })
     })
   })
