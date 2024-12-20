@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt'
 import {expect} from 'chai'
 import request from 'supertest'
 import {faker} from '@faker-js/faker'
@@ -36,6 +37,8 @@ const user = new DataService(db.User)
 
 const code = generateCode()
 const testUser = {...fakeUser, email: faker.internet.email()}
+
+let token
 
 describe('Auth Controller', () => {
   before(done => {
@@ -325,17 +328,62 @@ describe('Auth Controller', () => {
     it('returns token id if token is valid', done => {
       user.show({emailDigest: digest(testUser.email.toLowerCase())}).then(record => {
         record.getTokens().then(tokens => {
+          token = tokens[0]
+
           request(app)
-            .get(`/api/auth/validate-reset-token/${encodeURIComponent(tokens[0].value)}`)
+            .get(`/api/auth/validate-reset-token/${encodeURIComponent(token.value)}`)
             .end((error, response) => {
               expect(error).to.not.exist
               expect(response.statusCode).to.equal(OK)
-              expect(response.body.data).to.equal(tokens[0].id)
+              expect(response.body.data).to.equal(token.id)
 
               done()
             })
         })
       })
+    })
+  })
+
+  describe('POST /api/auth/change-password', () => {
+    it('retruns unprocessable if token id is missing', done => {
+      request(app)
+        .post('/api/auth/change-password').send({password: 'Testing123', confirmPassword: 'Testing123'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('returns unprocessable if password is different from confirm password', done => {
+      request(app)
+        .post('/api/auth/change-password').send({tokenId: token.id, password: 'Testing123', confirmPassword: 'Testing124'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('successfully updates user password with the right payload', done => {
+      request(app)
+        .post('/api/auth/change-password').send({tokenId: token.id, password: 'Testing123', confirmPassword: 'Testing123'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.message).to.equal('Password reset successful.')
+
+          user.show({emailDigest: digest(testUser.email.toLowerCase())}).then(record => {
+            expect(bcrypt.compareSync(testUser.password, record.password)).to.equal(false)
+            expect(bcrypt.compareSync('Testing123', record.password)).to.equal(true)
+
+            done()
+          })
+        })
     })
   })
 })

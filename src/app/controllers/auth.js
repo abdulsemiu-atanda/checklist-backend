@@ -169,6 +169,10 @@ const auth = {
         } else {
           res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
         }
+      }).catch(error => {
+        logger.error(error.message)
+
+        res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
       })
     } catch (error) {
       logger.error(error.message)
