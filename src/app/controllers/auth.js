@@ -156,6 +156,25 @@ const auth = {
 
       res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
     })
+  },
+  changePassword: (req, res) => {
+    try {
+      token.show({id: req.body.tokenId}, {include: db.User}).then(record => {
+        if (record && req.body.password === req.body.confirmPassword) {
+          record.User.update({password: req.body.password}).then(() => {
+            token.destroy(record.id)
+
+            res.status(OK).send({message: 'Password reset successful.', success: true})
+          })
+        } else {
+          res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+        }
+      })
+    } catch (error) {
+      logger.error(error.message)
+
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+    }
   }
 }
 
