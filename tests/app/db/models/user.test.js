@@ -1,9 +1,11 @@
 import bcrypt from 'bcrypt'
 import {expect} from 'chai'
 
+import {dateToISOString} from '../../../../src/util/tools'
 import db from '../../../../src/db/models'
 import * as roleNames from '../../../../src/config/roles'
-import {fakeUser as attributes} from '../../../fixtures'
+import {fakeUser as attributes} from '../../../fixtures/users'
+import {smtpStub} from '../../../testHelpers'
 
 const Role = db.Role
 const User = db.User
@@ -38,6 +40,28 @@ describe('User Model:', () => {
       expect(record.email).to.equal(attributes.email.toLowerCase())
       expect(record.RoleId).to.equal(role.id)
       expect(bcrypt.compareSync(attributes.password, record.password)).to.equal(true)
+      expect(record.confirmed).to.equal(false)
+      expect(smtpStub.called).to.equal(true)
+
+      done()
+    })
+  })
+
+  it('returns correct value for confirmed user', done => {
+    user.update({confirmedAt: dateToISOString(Date.now())}).then(updated => {
+      expect(updated.confirmed).to.equal(true)
+
+      done()
+    })
+  })
+
+  it('throws an error when trying to update virtual attribute', done => {
+    user.update({confirmed: true}).then(updated => {
+      expect(updated).to.not.exist
+
+      done()
+    }).catch(error => {
+      expect(error.message).to.equal('Do not try to set the `confirmed` value!')
 
       done()
     })

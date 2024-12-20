@@ -7,9 +7,9 @@ import {UNPROCESSABLE_REQUEST} from '../constants/messages'
 const role = new DataService(db.Role)
 
 const roles = {
-  index: (req, res) => {
+  index: (_req, res) => {
     role.index()
-      .then(records => res.status(OK).send({roles: records}))
+      .then(records => res.status(OK).send({data: records}))
       .catch(({errors}) => {
         const [error] = errors
 

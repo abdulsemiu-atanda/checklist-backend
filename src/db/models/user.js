@@ -2,9 +2,13 @@ import bcrypt from 'bcrypt'
 import {Model} from 'sequelize'
 
 import SymmetricEncryptionService from '../../app/services/SymmetricEncryptionService'
+import confirmUserEmail from '../../app/mailers/confirmUserEmail'
 import {digest} from '../../util/cryptTools'
+import {generateCode} from '../../util/authTools'
+import {smtpServer} from '../../util/tools'
 
 const encryption = new SymmetricEncryptionService(process.env.DATA_ENCRYPTION_KEY)
+const smtp = smtpServer()
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
@@ -21,6 +25,7 @@ export default (sequelize, DataTypes) => {
         },
         onDelete: 'CASCADE'
       })
+      User.hasOne(models.Confirmation)
     }
   }
   User.init({
@@ -69,8 +74,26 @@ export default (sequelize, DataTypes) => {
     RoleId: {
       allowNull: false,
       type: DataTypes.UUID,
+    },
+    confirmedAt: DataTypes.DATE,
+    confirmed: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return !!this.getDataValue('confirmedAt')
+      },
+      set() {
+        throw new Error('Do not try to set the `confirmed` value!')
+      }
     }
   }, {
+    hooks: {
+      afterCreate(user) {
+        const code = generateCode()
+
+        user.createConfirmation({code})
+        smtp.delay(3000).send(confirmUserEmail(user.toJSON(), code))
+      }
+    },
     sequelize,
     modelName: 'User',
   })
