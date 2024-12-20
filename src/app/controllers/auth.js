@@ -66,17 +66,14 @@ const auth = {
   },
   confirm: (req, res) => {
     try {
-      confirmation.show({codeDigest: digest(req.body.code)})
+      confirmation.show({codeDigest: digest(req.body.code)}, {include: db.User})
         .then(record => {
           if (record) {
-            record.getUser()
-              .then(confirmed => {
-                confirmed.update({confirmedAt: dateToISOString(Date.now())})
-                  .then(() => {
-                    confirmation.destroy(record.id)
-  
-                    res.status(OK).send({message: ACCOUNT_CONFIRMED, success: true})
-                  })
+            record.User.update({confirmedAt: dateToISOString(Date.now())})
+              .then(() => {
+                confirmation.destroy(record.id)
+
+                res.status(OK).send({message: ACCOUNT_CONFIRMED, success: true})
               })
           } else {
             res.status(BAD_REQUEST).send({message: INCOMPLETE_REQUEST, success: false})
