@@ -111,14 +111,12 @@ const auth = {
   },
   resendConfirmation: (req, res) => {
     if (EMAIL_REGEX.test(req.body.email)) {
-      user.show({emailDigest: digest(req.body.email.toLowerCase())}).then(record => {
+      user.show({emailDigest: digest(req.body.email.toLowerCase())}, {include: db.Confirmation}).then(record => {
         if (record) {
-          record.getConfirmation().then(data => {
-            if (data)
-              smtp.delay(3000).send(confirmUserEmail(record.toJSON(), data.code))
+          if (record.Confirmation)
+            smtp.delay(3000).send(confirmUserEmail(record.toJSON(), record.Confirmation.code))
 
-            res.status(OK).send({message: 'Account confirmation email sent.', success: true})
-          })
+          res.status(OK).send({message: 'Account confirmation email sent.', success: true})
         } else {
           res.status(OK).send({message: 'Account confirmation email sent.', success: true})
         }
