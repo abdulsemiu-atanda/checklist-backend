@@ -13,14 +13,14 @@ const createUser = ({data, trait}) => {
 
   if (trait === ADMIN) {
     return role.create({name: ADMIN}).then(([record]) => {
-      const shared = {RoleId: record.id}
+      const shared = {roleId: record.id}
       const attributes = isEmpty(data) ? {...adminUser, ...shared} : {...data, ...shared}
 
       return user.create(attributes)
     })
   } else {
     return role.create({name: USER}).then(([record]) => {
-      const shared = {RoleId: record.id}
+      const shared = {roleId: record.id}
       const attributes = isEmpty(data) ? {...fakeUser, ...shared, email: faker.internet.email()} : {...data, ...shared}
 
       return user.create(attributes)

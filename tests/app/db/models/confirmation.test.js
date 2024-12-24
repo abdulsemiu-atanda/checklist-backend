@@ -17,9 +17,9 @@ describe('Confirmation Model:', () => {
   before(done => {
     db.sequelize.sync({force: true}).then(() => {
       Role.create({name: USER}).then(role => {
-        User.create({...fakeUser, RoleId: role.id}).then(record => {
+        User.create({...fakeUser, roleId: role.id}).then(record => {
           user = record
-          confirmation = Confirmation.build({code: generateCode(), UserId: record.id})
+          confirmation = Confirmation.build({code: generateCode(), userId: record.id})
 
           done()
         })
@@ -38,19 +38,19 @@ describe('Confirmation Model:', () => {
   it('creates confirmation when user is created', done => {
     user.getConfirmation().then(record => {
       expect(record.code).to.exist
-      expect(record.UserId).to.equal(user.id)
+      expect(record.userId).to.equal(user.id)
 
       done()
     })
   })
 
   it('throws an error when creating with an invalid user id', done => {
-    Confirmation.create({code: generateCode(), UserId: uuidV4()}).then(record => {
+    Confirmation.create({code: generateCode(), userId: uuidV4()}).then(record => {
       expect(record).to.not.exist
 
       done()
     }).catch(error => {
-      expect(error.message).to.equal('insert or update on table "Confirmations" violates foreign key constraint "Confirmations_UserId_fkey"')
+      expect(error.message).to.equal('insert or update on table "Confirmations" violates foreign key constraint "Confirmations_userId_fkey"')
 
       done()
     })

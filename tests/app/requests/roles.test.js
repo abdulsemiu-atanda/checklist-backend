@@ -19,14 +19,14 @@ describe('Roles Controller', () => {
   before(done => {
     db.sequelize.sync({force: true}).then(() => {
       role.create({name: USER}).then(([record]) => {
-        user.create({...fakeUser, RoleId: record.id}).then(() => {
+        user.create({...fakeUser, roleId: record.id}).then(() => {
           request(app)
             .post('/api/auth/sign-in').send(fakeUser)
             .then((response) => {
               userToken = response.body.token
 
               role.create({name: ADMIN}).then(([adminRole]) => {
-                user.create({...adminUser, RoleId: adminRole.id}).then(() => {
+                user.create({...adminUser, roleId: adminRole.id}).then(() => {
                   request(app)
                   .post('/api/auth/sign-in').send(adminUser)
                   .then((response) => {

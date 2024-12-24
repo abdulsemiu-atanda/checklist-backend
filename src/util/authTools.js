@@ -6,7 +6,7 @@ import {ADMIN} from '../config/roles'
 import logger from '../app/constants/logger'
 
 export const userToken = (user, expiresIn = '1h') => jwt.sign(
-  {id: user.id, roleId: user.RoleId},
+  {id: user.id, roleId: user.roleId},
   process.env.SECRET,
   {expiresIn}
 )
