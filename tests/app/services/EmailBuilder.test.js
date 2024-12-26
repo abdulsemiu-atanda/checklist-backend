@@ -8,6 +8,14 @@ const paragraphs = [faker.lorem.text(), faker.lorem.text()]
 
 describe('EmailBuilder:', () => {
   describe('#build', () => {
+    it('builds email object if initialized without data', () => {
+      const emailBuilder = new EmailBuilder()
+      const payload = emailBuilder.build()
+
+      expect(Object.keys(payload)).to.deep.equal(['from', 'html', 'text'])
+      expect(payload.text).to.equal('Thank you!')
+    })
+
     it('builds an email object correctly', () => {
       const emailBuilder = new EmailBuilder({to: email}, paragraphs)
       const payload = emailBuilder.build()
