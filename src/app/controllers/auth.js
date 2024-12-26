@@ -128,7 +128,7 @@ const auth = {
   resetPassword: (req, res) => {
     if (EMAIL_REGEX.test(req.body.email)) {
       user.show({emailDigest: digest(req.body.email.toLowerCase())}).then(record => {
-        if (record) {
+        if (record && record.confirmed) {
           record.createToken({value: digest(generateCode(8))}).then(data => {
             smtp.delay(3000).send(resetPasswordEmail(record.toJSON(), data.value))
 
