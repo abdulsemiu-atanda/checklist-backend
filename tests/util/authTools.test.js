@@ -1,7 +1,6 @@
 import {expect} from 'chai'
 import {v4 as uuidV4} from 'uuid'
 
-import {ADMIN, USER} from '../../src/config/roles'
 import db from '../../src/db/models'
 import {create} from '../fixtures'
 
