@@ -2,18 +2,14 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Confirmations', {
+    await queryInterface.createTable('Tokens', {
       id: {
         allowNull: false,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
         type: Sequelize.UUID
       },
-      code: {
-        allowNull: false,
-        type: Sequelize.STRING
-      },
-      codeDigest: {
+      value: {
         allowNull: false,
         type: Sequelize.STRING
       },
@@ -38,6 +34,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Confirmations');
+    await queryInterface.dropTable('Tokens');
   }
 };

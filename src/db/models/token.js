@@ -1,9 +1,7 @@
 import {Model} from 'sequelize'
 
-import {ADMIN, USER} from '../../config/roles'
-
 export default (sequelize, DataTypes) => {
-  class Role extends Model {
+  class Token extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -11,25 +9,32 @@ export default (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Role.hasMany(models.User, {foreignKey: 'roleId'})
+      Token.belongsTo(
+        models.User,
+        {
+          foreignKey: 'userId',
+          onDelete: 'CASCADE'
+        }
+      )
     }
   }
-
-  Role.init({
+  Token.init({
     id: {
       primaryKey: true,
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4
     },
-    name: {
+    value: {
       allowNull: false,
-      type: DataTypes.ENUM(ADMIN, USER),
-      unique: true
+      type: DataTypes.STRING
+    },
+    userId: {
+      allowNull: false,
+      type: DataTypes.UUID,
     }
   }, {
     sequelize,
-    modelName: 'Role',
+    modelName: 'Token',
   })
-
-  return Role
+  return Token
 }

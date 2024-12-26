@@ -1,15 +1,20 @@
+import bcrypt from 'bcrypt'
 import {expect} from 'chai'
 import request from 'supertest'
+import {faker} from '@faker-js/faker'
 
 import app from '../../../src/app'
 import DataService from '../../../src/app/services/DataService'
 import db from '../../../src/db/models'
 import {digest} from '../../../src/util/cryptTools'
+import {create} from '../../fixtures'
 import {fakeUser, invalidUser} from '../../fixtures/users'
 import {generateCode} from '../../../src/util/authTools'
+import {smtpStub} from '../../testHelpers'
 
 import {USER} from '../../../src/config/roles'
 import {
+  ACCEPTED,
   BAD_REQUEST,
   CONFLICT,
   CREATED,
@@ -31,6 +36,9 @@ const role = new DataService(db.Role)
 const user = new DataService(db.User)
 
 const code = generateCode()
+const testUser = {...fakeUser, email: faker.internet.email()}
+
+let token
 
 describe('Auth Controller', () => {
   before(done => {
@@ -209,6 +217,173 @@ describe('Auth Controller', () => {
             })
         })
       })
+    })
+  })
+
+  describe('POST /api/auth/resend-confirmation', () => {
+    it('returns an error when email is invalid', done => {
+      request(app)
+        .post('/api/auth/resend-confirmation').send({email: 'example.com'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('returns success if email is valid', done => {
+      request(app)
+        .post('/api/auth/resend-confirmation').send({email: 'test@user.com'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.message).to.equal('Account confirmation email sent.')
+
+          done()
+        })
+    })
+
+    it('returns success for an already confirmed user', done => {
+      request(app)
+        .post('/api/auth/resend-confirmation').send(fakeUser)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.message).to.equal('Account confirmation email sent.')
+
+          done()
+        })
+    })
+
+    it('returns success for unconfirmed user', done => {
+      create({type: 'users', data: testUser}).then(() => {
+        request(app)
+          .post('/api/auth/resend-confirmation').send(testUser)
+          .end((error, response) => {
+            expect(error).to.not.exist
+            expect(response.statusCode).to.equal(OK)
+            expect(response.body.message).to.equal('Account confirmation email sent.')
+
+            done()
+          })
+      })
+    })
+  })
+
+  describe('POST /api/auth/reset-password', () => {
+    it('returns an error if email is invalid', done => {
+      request(app)
+        .post('/api/auth/reset-password').send({email: 'test.com'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('return success if user does not exist', done => {
+      request(app)
+        .post('/api/auth/reset-password').send({email: 'test@example.com'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(ACCEPTED)
+          expect(response.body.message).to.equal('Password reset requested.')
+          expect(smtpStub.called).to.equal(false)
+
+          done()
+        })
+    })
+
+    it('successfully sends reset email if user exists', done => {
+      request(app)
+        .post('/api/auth/reset-password').send(testUser)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(ACCEPTED)
+          expect(response.body.message).to.equal('Password reset requested.')
+          expect(smtpStub.called).to.equal(true)
+
+          done()
+        })
+    })
+  })
+
+  describe('GET /api/auth/validate-reset-token/:token', () => {
+    it('does not return data when token is invalid', done => {
+      request(app)
+        .get('/api/auth/validate-reset-token/s1st3r')
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.data).to.not.exist
+
+          done()
+        })
+    })
+
+    it('returns token id if token is valid', done => {
+      user.show({emailDigest: digest(testUser.email.toLowerCase())}).then(record => {
+        record.getTokens().then(tokens => {
+          token = tokens[0]
+
+          request(app)
+            .get(`/api/auth/validate-reset-token/${encodeURIComponent(token.value)}`)
+            .end((error, response) => {
+              expect(error).to.not.exist
+              expect(response.statusCode).to.equal(OK)
+              expect(response.body.data).to.equal(token.id)
+
+              done()
+            })
+        })
+      })
+    })
+  })
+
+  describe('POST /api/auth/change-password', () => {
+    it('retruns unprocessable if token id is missing', done => {
+      request(app)
+        .post('/api/auth/change-password').send({password: 'Testing123', confirmPassword: 'Testing123'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('returns unprocessable if password is different from confirm password', done => {
+      request(app)
+        .post('/api/auth/change-password').send({tokenId: token.id, password: 'Testing123', confirmPassword: 'Testing124'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('successfully updates user password with the right payload', done => {
+      request(app)
+        .post('/api/auth/change-password').send({tokenId: token.id, password: 'Testing123', confirmPassword: 'Testing123'})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.message).to.equal('Password reset successful.')
+
+          user.show({emailDigest: digest(testUser.email.toLowerCase())}).then(record => {
+            expect(bcrypt.compareSync(testUser.password, record.password)).to.equal(false)
+            expect(bcrypt.compareSync('Testing123', record.password)).to.equal(true)
+
+            done()
+          })
+        })
     })
   })
 })

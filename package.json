@@ -16,7 +16,7 @@
     "prepare:db": "yarn sequelize-cli db:migrate && yarn sequelize-cli db:seed:all",
     "clean:db": "yarn sequelize-cli db:seed:undo:all && yarn sequelize-cli db:migrate:undo:all",
     "setup:admin": "node dist/setup/adminSetup.js",
-    "setup:admin:dev": "yarn babel-node src/setup/adminSetup.js"
+    "setup:admin:dev": "NODE_ENV=development yarn babel-node src/setup/adminSetup.js"
   },
   "repository": "https://github.com/abdulsemiu-atanda/checklist-backend.git",
   "author": "Abdulsemiu Atanda <semiu@live.com>",

@@ -18,7 +18,7 @@ describe('User Model:', () => {
     db.sequelize.sync({force: true}).then(() => {
       Role.create({name: roleNames.ADMIN}).then(data => {
         role = data
-        user = User.build({...attributes, RoleId: role.id})
+        user = User.build({...attributes, roleId: role.id})
 
         done()
       })
@@ -38,7 +38,7 @@ describe('User Model:', () => {
       expect(record.firstName).to.equal(attributes.firstName)
       expect(record.lastName).to.equal(attributes.lastName)
       expect(record.email).to.equal(attributes.email.toLowerCase())
-      expect(record.RoleId).to.equal(role.id)
+      expect(record.roleId).to.equal(role.id)
       expect(bcrypt.compareSync(attributes.password, record.password)).to.equal(true)
       expect(record.confirmed).to.equal(false)
       expect(smtpStub.called).to.equal(true)
@@ -68,7 +68,7 @@ describe('User Model:', () => {
   })
 
   it('does not create user with existing email', done => {
-    User.create({...attributes, RoleId: role.id}).then(record => {
+    User.create({...attributes, roleId: role.id}).then(record => {
       expect(record).to.not.exist
 
       done()
@@ -89,7 +89,7 @@ describe('User Model:', () => {
     }).catch(({errors}) => {
       const [error] = errors
 
-      expect(error.message).to.equal('User.RoleId cannot be null')
+      expect(error.message).to.equal('User.roleId cannot be null')
 
       done()
     })

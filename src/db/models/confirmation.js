@@ -15,9 +15,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Confirmation.belongsTo(models.User, {
-        foreignKey: {
-          allowNull: false,
-        },
+        foreignKey: 'userId',
         onDelete: 'CASCADE'
       })
     }
@@ -41,7 +39,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.STRING
     },
-    UserId: {
+    userId: {
       allowNull: false,
       type: DataTypes.UUID
     }

@@ -30,14 +30,14 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING
       },
-      RoleId: {
+      roleId: {
         allowNull: false,
         type: Sequelize.UUID,
         onDelete: 'CASCADE',
         references: {
           model: 'Roles',
           key: 'id',
-          as: 'RoleId',
+          as: 'roleId',
         },
       },
       createdAt: {

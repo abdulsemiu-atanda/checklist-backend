@@ -20,12 +20,11 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       User.belongsTo(models.Role, {
-        foreignKey: {
-          allowNull: false,
-        },
+        foreignKey: 'roleId',
         onDelete: 'CASCADE'
       })
-      User.hasOne(models.Confirmation)
+      User.hasOne(models.Confirmation, {foreignKey: 'userId'})
+      User.hasMany(models.Token, {foreignKey: 'userId'})
     }
   }
   User.init({
@@ -71,7 +70,7 @@ export default (sequelize, DataTypes) => {
         this.setDataValue('password', bcrypt.hashSync(value, bcrypt.genSaltSync(10)))
       }
     },
-    RoleId: {
+    roleId: {
       allowNull: false,
       type: DataTypes.UUID,
     },

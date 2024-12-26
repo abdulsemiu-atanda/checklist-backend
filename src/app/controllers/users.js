@@ -14,7 +14,7 @@ const users = {
     const options = adminUser ?
       {attributes: {exclude: ['emailDigest', 'password']}} :
       {
-        attributes: {exclude: ['emailDigest', 'password', 'RoleId']},
+        attributes: {exclude: ['emailDigest', 'password', 'roleId']},
         where: {id: req.user.id}
       }
 
