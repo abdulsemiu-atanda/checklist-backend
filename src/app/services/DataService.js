@@ -15,7 +15,7 @@ class DataService {
 
   /**
    * Creates a new record with the provided resource if it does not exist
-   * @param {Object<{[key]: value}>} resource - attributes for new record with the unique attribute listed first
+   * @param {{column: String | Number | Date | Array | Object}} resource - attributes for new record with the unique attribute listed first
    * @returns {Promise}
    */
   create(resource) {
