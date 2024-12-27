@@ -258,16 +258,18 @@ describe('Auth Controller', () => {
     })
 
     it('returns success for unconfirmed user', done => {
-      create({type: 'users', data: testUser}).then(() => {
-        request(app)
-          .post('/api/auth/resend-confirmation').send(testUser)
-          .end((error, response) => {
-            expect(error).to.not.exist
-            expect(response.statusCode).to.equal(OK)
-            expect(response.body.message).to.equal('Account confirmation email sent.')
+      create({type: 'users', data: testUser}).then(([record]) => {
+        record.getConfirmation().then(() => { // making sure that the confirmation code transaction is completed
+          request(app)
+            .post('/api/auth/resend-confirmation').send(testUser)
+            .end((error, response) => {
+              expect(error).to.not.exist
+              expect(response.statusCode).to.equal(OK)
+              expect(response.body.message).to.equal('Account confirmation email sent.')
 
-            done()
-          })
+              done()
+            })
+        })
       })
     })
   })
