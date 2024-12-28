@@ -4,7 +4,7 @@ import AsymmetricEncryptionService from './AsymmetricEncryptionService'
 import confirmUserEmail from '../mailers/confirmUserEmail'
 import DataService from './DataService'
 import {dateToISOString, smtpServer} from '../../util/tools'
-import {digest} from '../../util/cryptTools'
+import {digest, updatePrivateKey} from '../../util/cryptTools'
 import {formatData} from '../../util/dataTools'
 import {generateCode, userToken} from '../../util/authTools'
 import logger from '../constants/logger'
@@ -51,6 +51,18 @@ class AuthService {
         logger.error(error.message)
       })
     }
+  }
+
+  #updatePrivateKey({user, password}) {
+    user.getUserKey().then(userKey => {
+      if (userKey) {
+        const privateKey = updatePrivateKey({backupKey: userKey.backupKey, passphrase: password})
+
+        userKey.update({privateKey}).then(() => logger.info(`Updated private key for user ${user.id}`))
+      } else {
+        this.#createUserKey({user, password})
+      }
+    })
   }
 
   create(payload, callback) {
@@ -190,6 +202,7 @@ class AuthService {
     this.token.show({id: payload.tokenId}, {include: this.models.User}).then(token => {
       if (token && payload.password === payload.confirmPassword) {
         token.User.update({password: payload.password}).then(() => {
+          this.#updatePrivateKey({user: token.User, password: payload.password})
           this.token.destroy(token.id)
 
           callback({status: OK, response: {message: 'Password reset successful.', success: true}})
