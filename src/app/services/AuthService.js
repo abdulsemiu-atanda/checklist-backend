@@ -223,6 +223,12 @@ class AuthService {
       callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
     })
   }
+
+  logout(user, callback) {
+    this.keystore.remove(user.id).then(
+      () => callback({status: ACCEPTED, response: {message: 'Logout Successful.', success: true}})
+    )
+  }
 }
 
 export default AuthService

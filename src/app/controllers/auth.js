@@ -38,6 +38,11 @@ const auth = {
     service.changePassword(req.body, ({status, response}) => {
       res.status(status).send(response)
     })
+  },
+  logout: (req, res) => {
+    service.logout(req.user, ({status, response}) => {
+      res.status(status).send(response)
+    })
   }
 }
 
