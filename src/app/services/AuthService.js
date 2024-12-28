@@ -21,6 +21,7 @@ import {
   LOGIN_SUCCESS,
   UNPROCESSABLE_REQUEST
 } from '../constants/messages'
+import {PASSWORD} from '../../config/tokens'
 
 class AuthService {
   #EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -199,7 +200,10 @@ class AuthService {
   }
 
   changePassword(payload, callback) {
-    this.token.show({id: payload.tokenId}, {include: this.models.User}).then(token => {
+    this.token.show(
+      {id: payload.tokenId},
+      {include: this.models.User, where: {type: PASSWORD}}
+    ).then(token => {
       if (token && payload.password === payload.confirmPassword) {
         token.User.update({password: payload.password}).then(() => {
           this.#updatePrivateKey({user: token.User, password: payload.password})
