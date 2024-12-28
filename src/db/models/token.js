@@ -1,5 +1,7 @@
 import {Model} from 'sequelize'
 
+import {PASSWORD, SHARING} from '../../config/tokens'
+
 export default (sequelize, DataTypes) => {
   class Token extends Model {
     /**
@@ -31,6 +33,11 @@ export default (sequelize, DataTypes) => {
     userId: {
       allowNull: false,
       type: DataTypes.UUID,
+    },
+    type: {
+      allowNull: false,
+      type: DataTypes.ENUM(PASSWORD, SHARING),
+      defaultValue: PASSWORD
     }
   }, {
     sequelize,
