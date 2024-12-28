@@ -2,7 +2,9 @@ import inquirer from 'inquirer'
 
 import DataService from '../app/services/DataService'
 import db from '../db/models'
+import {isEmpty} from '../util/tools'
 import logger from '../app/constants/logger'
+
 import {ADMIN} from '../config/roles'
 
 const role = new DataService(db.Role)
@@ -34,15 +36,18 @@ const questions = [
 ]
 
 inquirer.prompt(questions).then(answers => {
-  role.show({name: ADMIN}).then(record => {
+  role.show({name: ADMIN}, {include: db.User}).then(record => {
     if (record) {
-      user.create({...answers, roleId: record.id}).then(([_, created]) => {
-        if (created)
-          logger.info('Admin user successfully created')
-      }).catch(error => {
-
-        logger.error(error.message)
-      })
+      if (isEmpty(record.Users)) {
+        user.create({...answers, roleId: record.id}).then(([_, created]) => {
+          if (created)
+            logger.info('Admin user successfully created')
+        }).catch(error => {
+          logger.error(error.message)
+        })
+      } else {
+        logger.info('Admin user(s) have been created. Please reach out for role elevation.')
+      }
     } else {
       logger.info('Admin role has not been created. Please run seeders and try again.')
     }
