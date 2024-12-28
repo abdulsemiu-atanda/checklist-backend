@@ -6,11 +6,12 @@ import Table from 'cli-table'
 import {Umzug, SequelizeStorage} from 'umzug'
 
 import db from '../db/models'
-import {dasherizeCamelCase, isEmpty, smtpServer} from '../util/tools'
+import {dasherizeCamelCase, isEmpty, smtpServer, redisKeystore} from '../util/tools'
 import logger from './constants/logger'
 
 const app = express()
 const emailSender = smtpServer()
+const keystore = redisKeystore()
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -46,6 +47,11 @@ if (process.env.NODE_ENV !== 'test') {
       logger.error(error.message)
     else
       logger.info('SMTP Server connection was successful.')
+  })
+
+  keystore.client.on('error', error => logger.error(`REDIS error: ${error}`))
+  keystore.client.connect().then(client => {
+    client.clientInfo().then(info => logger.info(`REDIS connection established at ${info.laddr}`))
   })
 }
 
