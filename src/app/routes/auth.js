@@ -12,6 +12,6 @@ auth.route('/resend-confirmation').post(authController.resendConfirmation)
 auth.route('/reset-password').post(authController.resetPassword)
 auth.route('/validate-token/:token').get(authController.validateResetToken)
 auth.route('/change-password').post(authController.changePassword)
-auth.route('/logout').post(middleware.isLoggedIn, authController.logout)
+auth.route('/logout').get(middleware.isLoggedIn, authController.logout)
 
 export default auth
