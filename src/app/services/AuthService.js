@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt'
 
+import AsymmetricEncryptionService from './AsymmetricEncryptionService'
 import confirmUserEmail from '../mailers/confirmUserEmail'
 import DataService from './DataService'
 import {dateToISOString, smtpServer} from '../../util/tools'
@@ -36,6 +37,22 @@ class AuthService {
 
   #validEmail(email) { return this.#EMAIL_REGEX.test(email) }
 
+  #createUserKey({user, password}) {
+    if (!user.UserKey) {
+      const encryptor = new AsymmetricEncryptionService(password)
+
+      encryptor.generateKeyPair().then(({SHAFingerprint, ...keyPair}) => {
+        user.createUserKey({...keyPair, fingerprint: SHAFingerprint}).then(() => {
+          logger.info(`UserKey created for user ${user.id}`)
+        }).catch(error => {
+          logger.error(error.message)
+        })
+      }).catch(error => {
+        logger.error(error.message)
+      })
+    }
+  }
+
   create(payload, callback) {
     if (this.#validEmail(payload.email)) {
       this.role.show({name: USER}).then(role => {
@@ -48,6 +65,7 @@ class AuthService {
             if (created) {
               const token = userToken(user.toJSON())
 
+              this.#createUserKey({user, password: payload.password})
               callback({status: CREATED, response: {token, message: ACCOUNT_CREATION_SUCCESS, success: true}})
             } else {
               callback({status: CONFLICT, response: {message: INCOMPLETE_REQUEST, success: false}})
@@ -89,11 +107,12 @@ class AuthService {
 
   login(payload, callback) {
     if (this.#validEmail(payload.email)) {
-      this.user.show({emailDigest: digest(payload.email.toLowerCase())}).then(user => {
+      this.user.show({emailDigest: digest(payload.email.toLowerCase())}, {include: this.models.UserKey}).then(user => {
         if (user) {
           if (bcrypt.compareSync(payload.password, user.password)) {
             const token = userToken(user.toJSON())
 
+            this.#createUserKey({user, password: payload.password})
             callback({
               status: OK,
               response: {
