@@ -52,14 +52,14 @@ export const generateKeyPair = passphrase => new Promise((resolve, reject) => {
     if (error) {
       reject(error)
     } else {
-      const backupKey = encryptRSAPrivateKey({
+      const backupKey = forge.util.encode64(encryptRSAPrivateKey({
         privateKey: decryptRSAPrivateKey(encryptedPrivateKey, passphrase),
         passphrase: process.env.ENCRYPTION_KEY
-      })
+      }))
 
       resolve({
         publicKey,
-        privateKey: encryptedPrivateKey,
+        privateKey: forge.util.encode64(encryptedPrivateKey),
         backupKey,
         SHAFingerprint: keyFingerprint(formatPublicKey(publicKey))
       })
