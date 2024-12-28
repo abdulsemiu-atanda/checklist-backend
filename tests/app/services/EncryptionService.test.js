@@ -13,6 +13,12 @@ describe('EncryptionService', () => {
       expect(() => { new EncryptionService(1234) }).to.throw(TypeError, 'Invalid initialization parameters, expect key: [String] with length 32.')
       expect(() => { new EncryptionService('testing') }).to.throw(TypeError, 'Invalid initialization parameters, expect key: [String] with length 32.')
     })
+
+    it('does not required fixed key length in asymmetric mode', () => {
+      const encryption = new EncryptionService('v3ryS3cr3tAffa!r', 'asymmetric')
+
+      expect(encryption.key).to.equal('v3ryS3cr3tAffa!r')
+    })
   })
 
   describe('#encrypt', () => {

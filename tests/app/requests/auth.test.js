@@ -258,16 +258,18 @@ describe('Auth Controller', () => {
     })
 
     it('returns success for unconfirmed user', done => {
-      create({type: 'users', data: testUser}).then(() => {
-        request(app)
-          .post('/api/auth/resend-confirmation').send(testUser)
-          .end((error, response) => {
-            expect(error).to.not.exist
-            expect(response.statusCode).to.equal(OK)
-            expect(response.body.message).to.equal('Account confirmation email sent.')
+      create({type: 'users', data: testUser}).then(([record]) => {
+        record.getConfirmation().then(() => { // making sure that the confirmation code transaction is completed
+          request(app)
+            .post('/api/auth/resend-confirmation').send(testUser)
+            .end((error, response) => {
+              expect(error).to.not.exist
+              expect(response.statusCode).to.equal(OK)
+              expect(response.body.message).to.equal('Account confirmation email sent.')
 
-            done()
-          })
+              done()
+            })
+        })
       })
     })
   })
@@ -298,9 +300,22 @@ describe('Auth Controller', () => {
         })
     })
 
-    it('successfully sends reset email if user exists', done => {
+    it('returns success if user is unconfirmed', done => {
       request(app)
         .post('/api/auth/reset-password').send(testUser)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(ACCEPTED)
+          expect(response.body.message).to.equal('Password reset requested.')
+          expect(smtpStub.called).to.equal(false)
+
+          done()
+        })
+    })
+
+    it('successfully sends reset email if user exists', done => {
+      request(app)
+        .post('/api/auth/reset-password').send(fakeUser)
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
@@ -326,7 +341,7 @@ describe('Auth Controller', () => {
     })
 
     it('returns token id if token is valid', done => {
-      user.show({emailDigest: digest(testUser.email.toLowerCase())}).then(record => {
+      user.show({emailDigest: digest(fakeUser.email.toLowerCase())}).then(record => {
         record.getTokens().then(tokens => {
           token = tokens[0]
 
@@ -377,8 +392,8 @@ describe('Auth Controller', () => {
           expect(response.statusCode).to.equal(OK)
           expect(response.body.message).to.equal('Password reset successful.')
 
-          user.show({emailDigest: digest(testUser.email.toLowerCase())}).then(record => {
-            expect(bcrypt.compareSync(testUser.password, record.password)).to.equal(false)
+          user.show({emailDigest: digest(fakeUser.email.toLowerCase())}).then(record => {
+            expect(bcrypt.compareSync(fakeUser.password, record.password)).to.equal(false)
             expect(bcrypt.compareSync('Testing123', record.password)).to.equal(true)
 
             done()

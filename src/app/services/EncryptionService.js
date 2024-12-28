@@ -1,11 +1,11 @@
 class EncryptionService {
   key
 
-  constructor(key) {
-    if (typeof key !== 'string' || key.length !== 32)
+  constructor(key, mode = 'symmetric') {
+    if (typeof key !== 'string' || (mode === 'symmetric' && key.length !== 32))
       throw new TypeError('Invalid initialization parameters, expect key: [String] with length 32.')
 
-    this.key = Buffer.from(key)
+    this.key = mode === 'symmetric' ? Buffer.from(key) : key
   }
 
   encrypt() {
