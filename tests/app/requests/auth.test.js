@@ -327,10 +327,10 @@ describe('Auth Controller', () => {
     })
   })
 
-  describe('GET /api/auth/validate-reset-token/:token', () => {
+  describe('GET /api/auth/validate-token/:token', () => {
     it('does not return data when token is invalid', done => {
       request(app)
-        .get('/api/auth/validate-reset-token/s1st3r')
+        .get('/api/auth/validate-token/s1st3r')
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(OK)
@@ -346,7 +346,7 @@ describe('Auth Controller', () => {
           token = tokens[0]
 
           request(app)
-            .get(`/api/auth/validate-reset-token/${encodeURIComponent(token.value)}`)
+            .get(`/api/auth/validate-token/${encodeURIComponent(token.value)}`)
             .end((error, response) => {
               expect(error).to.not.exist
               expect(response.statusCode).to.equal(OK)

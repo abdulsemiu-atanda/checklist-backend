@@ -9,7 +9,7 @@ auth.route('/sign-in').post(authController.login)
 auth.route('/confirm').post(authController.confirm)
 auth.route('/resend-confirmation').post(authController.resendConfirmation)
 auth.route('/reset-password').post(authController.resetPassword)
-auth.route('/validate-reset-token/:token').get(authController.validateResetToken)
+auth.route('/validate-token/:token').get(authController.validateResetToken)
 auth.route('/change-password').post(authController.changePassword)
 
 export default auth
