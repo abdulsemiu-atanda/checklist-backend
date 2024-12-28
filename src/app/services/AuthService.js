@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt'
 import AsymmetricEncryptionService from './AsymmetricEncryptionService'
 import confirmUserEmail from '../mailers/confirmUserEmail'
 import DataService from './DataService'
-import {dateToISOString, smtpServer} from '../../util/tools'
+import {dateToISOString, redisKeystore, smtpServer} from '../../util/tools'
 import {digest, updatePrivateKey} from '../../util/cryptTools'
 import {formatData} from '../../util/dataTools'
 import {generateCode, userToken} from '../../util/authTools'
@@ -27,6 +27,7 @@ class AuthService {
   #EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
   constructor(models) {
+    this.keystore = redisKeystore()
     this.models = models
     this.smtp = smtpServer()
 
@@ -79,6 +80,7 @@ class AuthService {
               const token = userToken(user.toJSON())
 
               this.#createUserKey({user, password: payload.password})
+              this.keystore.insert({key: user.id, value: payload.password})
               callback({status: CREATED, response: {token, message: ACCOUNT_CREATION_SUCCESS, success: true}})
             } else {
               callback({status: CONFLICT, response: {message: INCOMPLETE_REQUEST, success: false}})
@@ -126,6 +128,7 @@ class AuthService {
             const token = userToken(user.toJSON())
 
             this.#createUserKey({user, password: payload.password})
+            this.keystore.insert({key: user.id, value: payload.password})
             callback({
               status: OK,
               response: {
