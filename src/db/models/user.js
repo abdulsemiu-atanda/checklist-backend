@@ -25,6 +25,10 @@ export default (sequelize, DataTypes) => {
       })
       User.hasOne(models.Confirmation, {foreignKey: 'userId'})
       User.hasMany(models.Token, {foreignKey: 'userId'})
+      User.hasMany(
+        models.Token,
+        {foreignKey: 'tokenableId', as: 'Collaborator', constraints: false, scope: {tokenableType: 'User'}}
+      )
       User.hasOne(models.UserKey, {foreignKey: 'userId'})
     }
   }

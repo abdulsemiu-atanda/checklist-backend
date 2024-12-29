@@ -18,6 +18,8 @@ export default (sequelize, DataTypes) => {
           onDelete: 'CASCADE'
         }
       )
+
+      Token.belongsTo(models.User, {foreignKey: 'tokenableId', as: 'Collaborator', constraints: false})
     }
   }
   Token.init({
@@ -38,8 +40,26 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.ENUM(PASSWORD, SHARING),
       defaultValue: PASSWORD
-    }
+    },
+    tokenableId: DataTypes.UUID,
+    tokenableType: DataTypes.STRING
   }, {
+    hooks: {
+      afterFind(result) {
+        if (result) {
+          const tokens = Array.isArray(result) ? result : [result]
+
+          for (const token of tokens) {
+            if (token.tokenableType === 'User' && token.Collaborator !== undefined)
+              token.tokenable = token.Collaborator
+
+            // To prevent mistakes:
+            delete token.Collaborator
+            delete token.dataValues.Collaborator
+          }
+        }
+      }
+    },
     sequelize,
     modelName: 'Token',
   })
