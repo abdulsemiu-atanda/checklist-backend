@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Invite.belongsTo(models.Token, {foreignKey: 'tokenId', onDelete: 'CASCADE'})
-      Invite.hasMany(
+      Invite.hasOne(
         models.Token,
         {foreignKey: 'tokenableId', as: 'Lead', constraints: false, scope: {tokenableType: 'Invite'}}
       )
