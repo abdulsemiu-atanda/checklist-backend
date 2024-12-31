@@ -1,4 +1,5 @@
 import {Model} from "sequelize"
+import {COMPLETED, CREATED, STARTED} from "../../config/tasks"
 
 export default (sequelize, DataTypes) => {
   class Task extends Model {
@@ -13,8 +14,6 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'userId',
         onDelete: 'CASCADE'
       })
-      Task.hasOne(models.User, {foreignKey: 'userId'})
-      Task.hasMany(models.User, {foreignKey: 'userId'})
     }
   }
   Task.init({
@@ -33,8 +32,11 @@ export default (sequelize, DataTypes) => {
     },
     status: {
       allowNull: false,
-      type: DataTypes.ENUM,
-      values: ['created', 'started', 'completed']
+      type: DataTypes.ENUM(CREATED, STARTED, COMPLETED)
+    },
+    userId: {
+      allowNull: false,
+      type: DataTypes.UUID,
     },
     createdAt: {
       allowNull: false,
