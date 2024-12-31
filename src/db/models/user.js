@@ -30,6 +30,7 @@ export default (sequelize, DataTypes) => {
         {foreignKey: 'tokenableId', as: 'Collaborator', constraints: false, scope: {tokenableType: 'User'}}
       )
       User.hasOne(models.UserKey, {foreignKey: 'userId'})
+      User.hasMany(models.Task, {foreignKey: 'userId'})
     }
   }
   User.init({
