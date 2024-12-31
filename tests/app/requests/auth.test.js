@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt'
 import {expect} from 'chai'
 import request from 'supertest'
 import {faker} from '@faker-js/faker'
+import {v4 as uuidV4} from 'uuid'
 
 import app from '../../../src/app'
 import DataService from '../../../src/app/services/DataService'
@@ -9,7 +10,7 @@ import db from '../../../src/db/models'
 import {digest} from '../../../src/util/cryptTools'
 import {create} from '../../fixtures'
 import {fakeUser, invalidUser} from '../../fixtures/users'
-import {generateCode} from '../../../src/util/authTools'
+import {generateCode, userToken} from '../../../src/util/authTools'
 import {smtpStub} from '../../testHelpers'
 
 import {USER} from '../../../src/config/roles'
@@ -37,7 +38,9 @@ const user = new DataService(db.User)
 
 const code = generateCode()
 const testUser = {...fakeUser, email: faker.internet.email()}
+const fakeToken = userToken({id: uuidV4(), roleId: uuidV4})
 
+let authToken
 let token
 
 describe('Auth Controller', () => {
@@ -83,6 +86,8 @@ describe('Auth Controller', () => {
         request(app)
           .post('/api/auth/sign-up').send(fakeUser)
           .end((error, response) => {
+            authToken = response.body.token
+
             expect(error).to.not.exist
             expect(response.statusCode).to.equal(CREATED)
             expect(response.body.message).to.equal(ACCOUNT_CREATION_SUCCESS)
@@ -327,10 +332,10 @@ describe('Auth Controller', () => {
     })
   })
 
-  describe('GET /api/auth/validate-reset-token/:token', () => {
+  describe('GET /api/auth/validate-token/:token', () => {
     it('does not return data when token is invalid', done => {
       request(app)
-        .get('/api/auth/validate-reset-token/s1st3r')
+        .get('/api/auth/validate-token/s1st3r')
         .end((error, response) => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(OK)
@@ -346,7 +351,7 @@ describe('Auth Controller', () => {
           token = tokens[0]
 
           request(app)
-            .get(`/api/auth/validate-reset-token/${encodeURIComponent(token.value)}`)
+            .get(`/api/auth/validate-token/${encodeURIComponent(token.value)}`)
             .end((error, response) => {
               expect(error).to.not.exist
               expect(response.statusCode).to.equal(OK)
@@ -398,6 +403,46 @@ describe('Auth Controller', () => {
 
             done()
           })
+        })
+    })
+  })
+
+  describe('GET /api/auth/logout', () => {
+    it('returns unprocessable for unauthenticated request', done => {
+      request(app)
+        .get('/api/auth/logout')
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('returns unprocessable for fake token', done => {
+      request(app)
+        .get('/api/auth/logout')
+        .set('Authorization', fakeToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('successfully logout with a valid token', done => {
+      request(app)
+        .get('/api/auth/logout')
+        .set('Authorization', authToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(ACCEPTED)
+          expect(response.body.message).to.equal('Logout Successful.')
+
+          done()
         })
     })
   })

@@ -52,17 +52,29 @@ export const generateKeyPair = passphrase => new Promise((resolve, reject) => {
     if (error) {
       reject(error)
     } else {
-      const backupKey = encryptRSAPrivateKey({
+      const backupKey = forge.util.encode64(encryptRSAPrivateKey({
         privateKey: decryptRSAPrivateKey(encryptedPrivateKey, passphrase),
         passphrase: process.env.ENCRYPTION_KEY
-      })
+      }))
 
       resolve({
         publicKey,
-        privateKey: encryptedPrivateKey,
+        privateKey: forge.util.encode64(encryptedPrivateKey),
         backupKey,
         SHAFingerprint: keyFingerprint(formatPublicKey(publicKey))
       })
     }
   })
 })
+
+/**
+ * Re-encrypts the private key from a backup key with the provided passphrase.
+ * @param {{backupKey: String, passphrase: String}}
+ * @returns {String}
+ */
+export const updatePrivateKey = ({backupKey, passphrase}) => forge.util.encode64(
+  encryptRSAPrivateKey({
+    privateKey: decryptRSAPrivateKey(forge.util.decode64(backupKey), process.env.ENCRYPTION_KEY),
+    passphrase
+  })
+)

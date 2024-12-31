@@ -1,9 +1,10 @@
 import bcrypt from 'bcrypt'
 
+import AsymmetricEncryptionService from './AsymmetricEncryptionService'
 import confirmUserEmail from '../mailers/confirmUserEmail'
 import DataService from './DataService'
-import {dateToISOString, smtpServer} from '../../util/tools'
-import {digest} from '../../util/cryptTools'
+import {dateToISOString, redisKeystore, smtpServer} from '../../util/tools'
+import {digest, updatePrivateKey} from '../../util/cryptTools'
 import {formatData} from '../../util/dataTools'
 import {generateCode, userToken} from '../../util/authTools'
 import logger from '../constants/logger'
@@ -20,11 +21,13 @@ import {
   LOGIN_SUCCESS,
   UNPROCESSABLE_REQUEST
 } from '../constants/messages'
+import {PASSWORD} from '../../config/tokens'
 
 class AuthService {
   #EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
   constructor(models) {
+    this.keystore = redisKeystore()
     this.models = models
     this.smtp = smtpServer()
 
@@ -35,6 +38,34 @@ class AuthService {
   }
 
   #validEmail(email) { return this.#EMAIL_REGEX.test(email) }
+
+  #createUserKey({user, password}) {
+    if (!user.UserKey) {
+      const encryptor = new AsymmetricEncryptionService(password)
+
+      encryptor.generateKeyPair().then(({SHAFingerprint, ...keyPair}) => {
+        user.createUserKey({...keyPair, fingerprint: SHAFingerprint}).then(() => {
+          logger.info(`UserKey created for user ${user.id}`)
+        }).catch(error => {
+          logger.error(error.message)
+        })
+      }).catch(error => {
+        logger.error(error.message)
+      })
+    }
+  }
+
+  #updatePrivateKey({user, password}) {
+    user.getUserKey().then(userKey => {
+      if (userKey) {
+        const privateKey = updatePrivateKey({backupKey: userKey.backupKey, passphrase: password})
+
+        userKey.update({privateKey}).then(() => logger.info(`Updated private key for user ${user.id}`))
+      } else {
+        this.#createUserKey({user, password})
+      }
+    })
+  }
 
   create(payload, callback) {
     if (this.#validEmail(payload.email)) {
@@ -48,6 +79,8 @@ class AuthService {
             if (created) {
               const token = userToken(user.toJSON())
 
+              this.#createUserKey({user, password: payload.password})
+              this.keystore.insert({key: user.id, value: payload.password})
               callback({status: CREATED, response: {token, message: ACCOUNT_CREATION_SUCCESS, success: true}})
             } else {
               callback({status: CONFLICT, response: {message: INCOMPLETE_REQUEST, success: false}})
@@ -89,11 +122,13 @@ class AuthService {
 
   login(payload, callback) {
     if (this.#validEmail(payload.email)) {
-      this.user.show({emailDigest: digest(payload.email.toLowerCase())}).then(user => {
+      this.user.show({emailDigest: digest(payload.email.toLowerCase())}, {include: this.models.UserKey}).then(user => {
         if (user) {
           if (bcrypt.compareSync(payload.password, user.password)) {
             const token = userToken(user.toJSON())
 
+            this.#createUserKey({user, password: payload.password})
+            this.keystore.insert({key: user.id, value: payload.password})
             callback({
               status: OK,
               response: {
@@ -168,9 +203,13 @@ class AuthService {
   }
 
   changePassword(payload, callback) {
-    this.token.show({id: payload.tokenId}, {include: this.models.User}).then(token => {
+    this.token.show(
+      {id: payload.tokenId},
+      {include: this.models.User, where: {type: PASSWORD}}
+    ).then(token => {
       if (token && payload.password === payload.confirmPassword) {
         token.User.update({password: payload.password}).then(() => {
+          this.#updatePrivateKey({user: token.User, password: payload.password})
           this.token.destroy(token.id)
 
           callback({status: OK, response: {message: 'Password reset successful.', success: true}})
@@ -183,6 +222,12 @@ class AuthService {
 
       callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
     })
+  }
+
+  logout(user, callback) {
+    this.keystore.remove(user.id).then(
+      () => callback({status: ACCEPTED, response: {message: 'Logout Successful.', success: true}})
+    )
   }
 }
 

@@ -2,6 +2,8 @@ import {encodeUTF8} from 'tweetnacl-util'
 
 import EmailService from '../app/services/EmailService'
 import environment from '../config/environment'
+import KeystoreService from '../app/services/KeystoreService'
+import SymmetricEncryptionService from '../app/services/SymmetricEncryptionService'
 
 environment()
 
@@ -28,4 +30,11 @@ export const smtpServer = () => {
   })
 
   return server
+}
+
+export const redisKeystore = () => {
+  const encryptor = new SymmetricEncryptionService(process.env.DATA_ENCRYPTION_KEY)
+  const keystore = new KeystoreService(encryptor)
+
+  return keystore
 }

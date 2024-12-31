@@ -1,0 +1,8 @@
+{
+  "verbose": false,
+  "ignore": ["tests/**", "*.test.js"],
+  "exec": "babel-node",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

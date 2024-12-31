@@ -1,11 +1,16 @@
 import {expect} from 'chai'
 import {v4 as uuidV4} from 'uuid'
+import {fakerYO_NG as faker} from '@faker-js/faker'
 
 import db from '../../../../src/db/models'
 import {create} from '../../../fixtures'
 import {fakeUser} from '../../../fixtures/users'
+import logger from '../../../../src/app/constants/logger'
+import {PASSWORD, SHARING} from '../../../../src/config/tokens'
 
 const Token = db.Token
+const Invite = db.Invite
+const email = faker.internet.email()
 
 let token
 let user
@@ -32,8 +37,13 @@ describe('Token Model:', () => {
 
   it('saves record successfully', done => {
     token.save().then(record => {
+      token = record
+
       expect(record.value).to.equal('s1st3r')
       expect(record.userId).to.equal(user.id)
+      expect(record.type).to.equal(PASSWORD)
+      expect(record.tokenableId).to.not.exist
+      expect(record.tokenableType).to.not.exist
 
       done()
     })
@@ -60,6 +70,49 @@ describe('Token Model:', () => {
       expect(error.message).to.equal('insert or update on table "Tokens" violates foreign key constraint "Tokens_userId_fkey"')
 
       done()
+    })
+  })
+
+  describe('associations', () => {
+    it('creates invite token and invite successfully', done => {
+      Token.create({
+        value: 'T3st3r',
+        userId: user.id,
+        type: SHARING,
+        Invite: {email}
+      }, {include: Invite}).then(record => {
+        expect(record.Invite.email).to.equal(email.toLowerCase())
+        expect(record.tokenableId).to.equal(record.Invite.id)
+        expect(record.tokenableType).to.equal('Invite')
+        expect(record.type).to.equal(SHARING)
+        expect(record.tokenableId).to.not.equal(user.id)
+
+        done()
+      }).catch(error => {
+        logger.info(error.message)
+
+        done()
+      })
+    })
+
+    describe('polymorphic', () => {
+      it('adds invite tokenable when association is included', done => {
+        Token.findOne({where: {value: 'T3st3r'}, include: {model: Invite, as: 'Lead'}}).then(record => {
+          expect(record.tokenable.email).to.equal(email.toLowerCase())
+
+          done()
+        })
+      })
+
+      it('adds user tokenable when association is included', done => {
+        token.update({tokenableId: user.id, tokenableType: 'User'}).then(updated => {
+          Token.findOne({where: {id: updated.id}, include: {model: db.User, as: 'Collaborator'}}).then(record => {
+            expect(record.tokenable.id).to.equal(user.id)
+
+            done()
+          })
+        })
+      })
     })
   })
 })

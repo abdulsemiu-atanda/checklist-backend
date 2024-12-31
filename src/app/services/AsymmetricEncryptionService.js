@@ -29,7 +29,7 @@ class AsymmetricEncryptionService extends EncryptionService {
   }
 
   decrypt({privateKey, encrypted}) {
-    return decryptRSAPrivateKey(privateKey, this.key).decrypt(
+    return decryptRSAPrivateKey(forge.util.decode64(privateKey), this.key).decrypt(
       forge.util.decode64(encrypted),
       this.#ENCRYPTION_SCHEME,
       {
