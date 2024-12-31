@@ -1,4 +1,7 @@
 'use strict';
+
+const {CREATED, STARTED, COMPLETED} = require("../../config/tasks");
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -19,8 +22,17 @@ module.exports = {
       },
       status: {
         allowNull: false,
-        type: Sequelize.ENUM,
-        values: ['created', 'started', 'completed']
+        type: Sequelize.ENUM(CREATED, STARTED, COMPLETED)
+      },
+      userId: {
+        allowNull: false,
+        type: Sequelize.UUID,
+        onDelete: 'CASCADE',
+        references: {
+          model: 'Users',
+          key: 'id',
+          as: 'userId',
+        },
       },
       createdAt: {
         allowNull: false,
