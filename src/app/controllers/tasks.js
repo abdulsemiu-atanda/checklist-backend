@@ -14,6 +14,11 @@ const tasks = {
     service.index(req.user.id, ({status, response}) => {
       res.status(status).send(response)
     })
+  },
+  show: (req, res) => {
+    service.show({id: req.params.id, userId: req.user.id}, ({status, response}) => {
+      res.status(status).send(response)
+    })
   }
 }
 
