@@ -24,7 +24,7 @@ export default (sequelize, DataTypes) => {
     },
     title: {
       allowNull: false,
-      type: DataTypes.STRING
+      type: DataTypes.TEXT
     },
     description: {
       allowNull: false,
@@ -32,7 +32,8 @@ export default (sequelize, DataTypes) => {
     },
     status: {
       allowNull: false,
-      type: DataTypes.ENUM(CREATED, STARTED, COMPLETED)
+      type: DataTypes.ENUM(CREATED, STARTED, COMPLETED),
+      defaultValue: CREATED
     },
     userId: {
       allowNull: false,
