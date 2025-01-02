@@ -19,6 +19,11 @@ const tasks = {
     service.show({id: req.params.id, userId: req.user.id}, ({status, response}) => {
       res.status(status).send(response)
     })
+  },
+  update: (req, res) => {
+    service.update({id: req.params.id, payload: req.body, userId: req.user.id}, ({status, response}) => {
+      res.status(status).send(response)
+    })
   }
 }
 
