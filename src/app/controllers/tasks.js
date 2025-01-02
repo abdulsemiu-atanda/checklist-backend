@@ -24,6 +24,11 @@ const tasks = {
     service.update({id: req.params.id, payload: req.body, userId: req.user.id}, ({status, response}) => {
       res.status(status).send(response)
     })
+  },
+  destroy: (req, res) => {
+    service.delete(req.params.id, ({status, response}) => {
+      res.status(status).send(response)
+    })
   }
 }
 

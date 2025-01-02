@@ -3,7 +3,7 @@ import DataService from './DataService'
 import {redisKeystore} from '../../util/tools'
 import {decryptFields, encryptFields} from '../../util/cryptTools'
 
-import {CREATED, NOT_FOUND, OK, UNPROCESSABLE} from '../constants/statusCodes'
+import {ACCEPTED, CREATED, NOT_FOUND, OK, UNPROCESSABLE} from '../constants/statusCodes'
 import {RECORD_NOT_FOUND, UNPROCESSABLE_REQUEST} from '../constants/messages'
 import logger from '../constants/logger'
 
@@ -101,6 +101,11 @@ class TaskService {
         })
       })
     })
+  }
+
+  delete(id, callback) {
+    this.task.destroy(id)
+      .then(() => callback({status: ACCEPTED, response: {message: 'Record deleted', success: true}}))
   }
 }
 
