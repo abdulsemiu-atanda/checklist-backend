@@ -3,8 +3,8 @@ import DataService from './DataService'
 import {redisKeystore} from '../../util/tools'
 import {decryptFields, encryptFields} from '../../util/cryptTools'
 
-import {CREATED, OK, UNAUTHORIZED, UNPROCESSABLE} from '../constants/statusCodes'
-import {INCOMPLETE_REQUEST, UNPROCESSABLE_REQUEST} from '../constants/messages'
+import {CREATED, NOT_FOUND, OK, UNAUTHORIZED, UNPROCESSABLE} from '../constants/statusCodes'
+import {INCOMPLETE_REQUEST, RECORD_NOT_FOUND, UNPROCESSABLE_REQUEST} from '../constants/messages'
 import logger from '../constants/logger'
 
 class TaskService {
@@ -67,6 +67,28 @@ class TaskService {
           logger.error(error.message)
 
           callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+        })
+      } else {
+        callback({status: UNAUTHORIZED, response: {message: INCOMPLETE_REQUEST, success: false}})
+      }
+    })
+  }
+
+  show({id, userId}, callback) {
+    this.#session(userId).then(session => {
+      if (session) {
+        this.#userKey(userId).then(userKey => {
+          const encryptor = new AsymmetricEncryptionService(session)
+
+          this.task.show({id}).then(record => {
+            if (record) {
+              const decrypted = this.#decryptTask({record: record.toJSON(), encryptor, userKey})
+
+              callback({status: OK, response: {data: decrypted, success: true}})
+            } else {
+              callback({status: NOT_FOUND, response: {message: RECORD_NOT_FOUND, success: false}})
+            }
+          })
         })
       } else {
         callback({status: UNAUTHORIZED, response: {message: INCOMPLETE_REQUEST, success: false}})
