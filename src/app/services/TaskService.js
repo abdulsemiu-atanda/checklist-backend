@@ -1,21 +1,26 @@
 import AsymmetricEncryptionService from './AsymmetricEncryptionService'
 import DataService from './DataService'
-import {redisKeystore} from '../../util/tools'
-import {decryptFields, encryptFields} from '../../util/cryptTools'
+import {redisKeystore, smtpServer} from '../../util/tools'
+import {generateCode} from '../../util/authTools'
+import {decryptFields, digest, encryptFields, secureHash} from '../../util/cryptTools'
+import logger from '../constants/logger'
 
 import {ACCEPTED, CREATED, NOT_FOUND, OK, UNPROCESSABLE} from '../constants/statusCodes'
 import {RECORD_NOT_FOUND, UNPROCESSABLE_REQUEST} from '../constants/messages'
-import logger from '../constants/logger'
+import {SHARING} from '../../config/tokens'
 
 class TaskService {
   #keystore = redisKeystore()
 
   constructor(models) {
     this.models = models
-    this.userKey = new DataService(this.models.UserKey)
+    this.smtp = smtpServer()
 
+    this.userKey = new DataService(this.models.UserKey)
     this.task = new DataService(models.Task)
     this.user = new DataService(models.User)
+    this.token = new DataService(models.Token)
+    this.permission = new DataService(models.Permission)
   }
 
   #decryptTask({record, encryptor, userKey}) {
@@ -106,6 +111,52 @@ class TaskService {
   delete(id, callback) {
     this.task.destroy(id)
       .then(() => callback({status: ACCEPTED, response: {message: 'Record deleted', success: true}}))
+  }
+
+  inviteUser({currentUserId, payload}, callback) {
+    this.user.show({id: currentUserId}, {include: this.models.UserKey}).then(user => {
+      if (user?.UserKey) {
+        this.user.show({emailDigest: digest(payload.invite.email.toLowerCase())}).then(existing => {
+          try {
+            const value = secureHash(generateCode(9), 'base64url')
+
+            if (existing) {
+              this.token.create({
+                value,
+                type: SHARING,
+                userId: user.id,
+                tokenableId: existing.id,
+                tokenableType: 'User',
+                Invite: payload.invite
+              }, {include: this.models.Invite}).then(() => {
+                this.permission.create({ownableId: existing.id, ownableType: 'User', ...payload.permission}).then(() => {
+                  callback({status: ACCEPTED, response: {message: 'Collaboration invite created', success: true}})
+                })
+              })
+            } else {
+              this.token.create(
+                {value, type: SHARING, userId: user.id, Invite: payload.invite},
+                {include: this.models.Invite}
+              ).then(([token]) => {
+                this.token.update(token.id, {tokenableId: token.Invite.id, tokenableType: 'Invite'})
+
+                this.permission.create({ownableId: token.Invite.id, ownableType: 'Invite', ...payload.permission}).then(() => {
+                  callback({status: ACCEPTED, response: {message: 'Collaboration invite created', success: true}})
+                })
+              })
+            }
+          } catch (error) {
+            logger.error(error.message)
+
+            callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+          }
+        })
+      } else {
+        logger.error(`UserKey missing for user ${currentUserId}`)
+
+        callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+      }
+    })
   }
 }
 
