@@ -18,10 +18,11 @@ class DataService {
    * @param {{column: String | Number | Date | Array | Object}} resource - attributes for new record with the unique attribute listed first
    * @returns {Promise}
    */
-  create(resource) {
+  create(resource, options = {}) {
     const [column] = Object.keys(resource)
 
     return this.model.findOrCreate({
+      ...options,
       where: {[column]: resource[column]},
       defaults: resource
     })

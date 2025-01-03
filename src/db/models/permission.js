@@ -45,7 +45,7 @@ export default (sequelize, DataTypes) => {
         if (result) {
           const permissions = Array.isArray(result) ? result : [result]
 
-          for (const permission in permissions) {
+          for (const permission of permissions) {
             if (permission.ownableType === 'User' && permission.User !== undefined)
               permission.ownable = permission.User
             else if (permission.ownableType === 'Invite' && permission.Invite !== undefined)

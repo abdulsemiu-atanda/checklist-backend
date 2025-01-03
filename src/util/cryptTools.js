@@ -21,8 +21,8 @@ export const decryptRSAPrivateKey = (encryptedPrivateKey, passphrase) =>
 export const encryptRSAPrivateKey = ({privateKey, passphrase}) =>
   forge.pki.encryptRsaPrivateKey(privateKey, passphrase)
 
-export const secureHash = value =>
-  crypto.createHmac('sha256', process.env.ENCRYPTION_KEY).update(value).digest('hex')
+export const secureHash = (value, encoding = 'hex') =>
+  crypto.createHmac('sha256', process.env.ENCRYPTION_KEY).update(value).digest(encoding)
 
 export const keyFingerprint = (key, delimiter = ':') =>
   secureHash(key).match(/\w{2}/g).join(delimiter).toUpperCase()
