@@ -1,6 +1,6 @@
 import AsymmetricEncryptionService from './AsymmetricEncryptionService'
 import DataService from './DataService'
-import {redisKeystore, smtpServer} from '../../util/tools'
+import {redisKeystore} from '../../util/tools'
 import {generateCode} from '../../util/authTools'
 import {decryptFields, digest, encryptFields, secureHash} from '../../util/cryptTools'
 import logger from '../constants/logger'
@@ -14,7 +14,6 @@ class TaskService {
 
   constructor(models) {
     this.models = models
-    this.smtp = smtpServer()
 
     this.userKey = new DataService(this.models.UserKey)
     this.task = new DataService(models.Task)
