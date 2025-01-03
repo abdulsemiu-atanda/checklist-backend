@@ -129,7 +129,7 @@ class TaskService {
                 Invite: payload.invite
               }, {include: this.models.Invite}).then(() => {
                 this.permission.create({ownableId: existing.id, ownableType: 'User', ...payload.permission}).then(() => {
-                  callback({status: ACCEPTED, response: {message: 'Collaboration invite created', success: true}})
+                  callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
                 })
               })
             } else {
@@ -140,7 +140,7 @@ class TaskService {
                 this.token.update(token.id, {tokenableId: token.Invite.id, tokenableType: 'Invite'})
 
                 this.permission.create({ownableId: token.Invite.id, ownableType: 'Invite', ...payload.permission}).then(() => {
-                  callback({status: ACCEPTED, response: {message: 'Collaboration invite created', success: true}})
+                  callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
                 })
               })
             }
