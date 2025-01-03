@@ -31,6 +31,15 @@ export default (sequelize, DataTypes) => {
       )
       User.hasOne(models.UserKey, {foreignKey: 'userId'})
       User.hasMany(models.Task, {foreignKey: 'userId'})
+      User.hasMany(models.SharedKey, {foreignKey: 'userId'})
+      User.hasMany(
+        models.SharedKey,
+        {foreignKey: 'ownableId', as: 'Collaborator', constraints: false}
+      )
+      User.hasMany(
+        models.Permission,
+        {foreignKey: 'ownableId', constraints: false, scope: {ownableType: 'User'}}
+      )
     }
   }
   User.init({

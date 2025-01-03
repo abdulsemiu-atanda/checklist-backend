@@ -14,6 +14,7 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'userId',
         onDelete: 'CASCADE'
       })
+      Task.hasMany(models.Permission, {foreignKey: 'taskId'})
     }
   }
   Task.init({

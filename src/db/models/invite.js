@@ -21,6 +21,10 @@ export default (sequelize, DataTypes) => {
         models.Token,
         {foreignKey: 'tokenableId', as: 'Lead', constraints: false, scope: {tokenableType: 'Invite'}}
       )
+      Invite.hasMany(
+        models.Permission,
+        {foreignKey: 'ownableId', constraints: false, scope: {ownableType: 'Invite'}}
+      )
     }
   }
   Invite.init({
