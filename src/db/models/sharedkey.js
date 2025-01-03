@@ -10,7 +10,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       SharedKey.belongsTo(models.User, {foreignKey: 'userId', onDelete: 'CASCADE'})
-      SharedKey.belongsTo(models.User, {foreignKey: 'ownableId', as: 'Collaborator', constraints: false})
+      SharedKey.belongsTo(models.User, {foreignKey: 'ownableId', as: 'Owner', constraints: false})
     }
   }
   SharedKey.init({
@@ -38,12 +38,12 @@ export default (sequelize, DataTypes) => {
           const keys = Array.isArray(result) ? result : [result]
 
           for (const key of keys) {
-            if (key.Collaborator !== undefined)
-              key.ownable = key.Collaborator
+            if (key.Owner !== undefined)
+              key.ownable = key.Owner
 
             // To prevent mistakes:
-            delete key.Collaborator
-            delete key.dataValues.Collaborator
+            delete key.Owner
+            delete key.dataValues.Owner
           }
         }
       }

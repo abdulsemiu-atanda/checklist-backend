@@ -10,7 +10,7 @@ import {PASSWORD, SHARING} from '../../../../src/config/tokens'
 
 const Token = db.Token
 const Invite = db.Invite
-const email = faker.internet.email()
+const invite = {email: faker.internet.email(), firstName: faker.person.firstName(), lastName: faker.person.lastName()}
 
 let token
 let user
@@ -79,9 +79,11 @@ describe('Token Model:', () => {
         value: 'T3st3r',
         userId: user.id,
         type: SHARING,
-        Invite: {email}
+        Invite: invite
       }, {include: Invite}).then(record => {
-        expect(record.Invite.email).to.equal(email.toLowerCase())
+        expect(record.Invite.email).to.equal(invite.email.toLowerCase())
+        expect(record.Invite.firstName).to.equal(invite.firstName)
+        expect(record.Invite.lastName).to.equal(invite.lastName)
         expect(record.tokenableId).to.equal(record.Invite.id)
         expect(record.tokenableType).to.equal('Invite')
         expect(record.type).to.equal(SHARING)
@@ -98,7 +100,7 @@ describe('Token Model:', () => {
     describe('polymorphic', () => {
       it('adds invite tokenable when association is included', done => {
         Token.findOne({where: {value: 'T3st3r'}, include: {model: Invite, as: 'Lead'}}).then(record => {
-          expect(record.tokenable.email).to.equal(email.toLowerCase())
+          expect(record.tokenable.email).to.equal(invite.email.toLowerCase())
 
           done()
         })
