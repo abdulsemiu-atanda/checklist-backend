@@ -13,6 +13,11 @@ const invites = {
     service.resend({id: req.params.id, currentUserId: req.user.id}, ({status, response}) => {
       res.status(status).send(response)
     })
+  },
+  index: (req, res) => {
+    service.index(req.user.id, ({status, response}) => {
+      res.status(status).send(response)
+    })
   }
 }
 
