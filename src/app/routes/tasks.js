@@ -12,5 +12,6 @@ tasks.route('/:id').get(middleware.isLoggedIn, permissions.isOwner, controller.s
 tasks.route('/:id').patch(middleware.isLoggedIn, permissions.isOwner, controller.update)
 tasks.route('/:id').put(middleware.isLoggedIn, controller.update)
 tasks.route('/:id').delete(middleware.isLoggedIn, permissions.isOwner, controller.destroy)
+tasks.route('/:id/invite').post(middleware.isLoggedIn, permissions.isOwner, controller.invite)
 
 export default tasks

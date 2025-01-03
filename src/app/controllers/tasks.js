@@ -29,6 +29,14 @@ const tasks = {
     service.delete(req.params.id, ({status, response}) => {
       res.status(status).send(response)
     })
+  },
+  invite: (req, res) => {
+    service.inviteUser({
+      currentUserId: req.user.id,
+      payload: {...req.body, permission: {...req.body.permission, taskId: req.params.id}}
+    }, ({status, response}) => {
+      res.status(status).send(response)
+    })
   }
 }
 
