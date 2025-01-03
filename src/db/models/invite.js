@@ -33,6 +33,26 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4
     },
+    firstName: {
+      allowNull: false,
+      type: DataTypes.STRING,
+      get() {
+        return encryptor.decrypt(this.getDataValue('firstName'))
+      },
+      set(value) {
+        this.setDataValue('firstName', encryptor.encrypt(value))
+      }
+    },
+    lastName: {
+      allowNull: false,
+      type: DataTypes.STRING,
+      get() {
+        return encryptor.decrypt(this.getDataValue('lastName'))
+      },
+      set(value) {
+        this.setDataValue('lastName', encryptor.encrypt(value))
+      }
+    },
     email: {
       allowNull: false,
       type: DataTypes.STRING,
