@@ -1,6 +1,6 @@
 import AsymmetricEncryptionService from './AsymmetricEncryptionService'
 import DataService from './DataService'
-import {redisKeystore} from '../../util/tools'
+import {isEmpty, redisKeystore} from '../../util/tools'
 import {generateCode} from '../../util/authTools'
 import {decryptFields, digest, encryptFields, secureHash} from '../../util/cryptTools'
 import logger from '../constants/logger'
@@ -20,6 +20,7 @@ class TaskService {
     this.user = new DataService(models.User)
     this.token = new DataService(models.Token)
     this.permission = new DataService(models.Permission)
+    this.invite = new DataService(models.Invite)
   }
 
   #decryptTask({record, encryptor, userKey}) {
@@ -113,47 +114,56 @@ class TaskService {
   }
 
   inviteUser({currentUserId, payload}, callback) {
-    this.user.show({id: currentUserId}, {include: this.models.UserKey}).then(user => {
-      if (user?.UserKey) {
-        this.user.show({emailDigest: digest(payload.invite.email.toLowerCase())}).then(existing => {
-          try {
-            const value = secureHash(generateCode(9), 'base64url')
+    this.invite.index({
+      where: {emailDigest: digest(payload.invite?.email?.toLowerCase() || '')},
+      include: this.models.Token
+    }).then(invites => {
+      if (isEmpty(invites) || invites.every(invite => invite.Token.userId !== currentUserId)) {
+        this.user.show({id: currentUserId}, {include: this.models.UserKey}).then(user => {
+          if (user?.UserKey) {
+            this.user.show({emailDigest: digest(payload.invite.email.toLowerCase())}).then(existing => {
+              try {
+                const value = secureHash(generateCode(9), 'base64url')
 
-            if (existing) {
-              this.token.create({
-                value,
-                type: SHARING,
-                userId: user.id,
-                tokenableId: existing.id,
-                tokenableType: 'User',
-                Invite: payload.invite
-              }, {include: this.models.Invite}).then(() => {
-                this.permission.create({ownableId: existing.id, ownableType: 'User', ...payload.permission}).then(() => {
-                  callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
-                })
-              })
-            } else {
-              this.token.create(
-                {value, type: SHARING, userId: user.id, Invite: payload.invite},
-                {include: this.models.Invite}
-              ).then(([token]) => {
-                this.token.update(token.id, {tokenableId: token.Invite.id, tokenableType: 'Invite'})
+                if (existing) {
+                  this.token.create({
+                    value,
+                    type: SHARING,
+                    userId: user.id,
+                    tokenableId: existing.id,
+                    tokenableType: 'User',
+                    Invite: payload.invite
+                  }, {include: this.models.Invite}).then(() => {
+                    this.permission.create({ownableId: existing.id, ownableType: 'User', ...payload.permission}).then(() => {
+                      callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
+                    })
+                  })
+                } else {
+                  this.token.create(
+                    {value, type: SHARING, userId: user.id, Invite: payload.invite},
+                    {include: this.models.Invite}
+                  ).then(([token]) => {
+                    this.token.update(token.id, {tokenableId: token.Invite.id, tokenableType: 'Invite'})
 
-                this.permission.create({ownableId: token.Invite.id, ownableType: 'Invite', ...payload.permission}).then(() => {
-                  callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
-                })
-              })
-            }
-          } catch (error) {
-            logger.error(error.message)
+                    this.permission.create({ownableId: token.Invite.id, ownableType: 'Invite', ...payload.permission}).then(() => {
+                      callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
+                    })
+                  })
+                }
+              } catch (error) {
+                logger.error(error.message)
+
+                callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+              }
+            })
+          } else {
+            logger.error(`UserKey missing for user ${currentUserId}`)
 
             callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
           }
         })
       } else {
-        logger.error(`UserKey missing for user ${currentUserId}`)
-
-        callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+        callback({status: ACCEPTED, response: {message: 'Collaboration invite created', success: true}}) 
       }
     })
   }
