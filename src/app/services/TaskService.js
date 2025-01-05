@@ -52,10 +52,10 @@ class TaskService {
     })
   }
 
-  index(userId, callback) {
+  index({userId, options = {}}, callback) {
     this.#session(userId).then(session => {
       this.#userKey(userId).then(userKey => {
-        this.task.index().then(records => {
+        this.task.index(options).then(records => {
           const encryptor = new AsymmetricEncryptionService(session)
           const data = records.map(record => this.#decryptTask({record: record.toJSON(), encryptor, userKey}))
 

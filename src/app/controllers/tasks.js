@@ -1,5 +1,6 @@
 import db from '../../db/models'
 
+import {eagerLoading} from '../../util/dataTools'
 import TaskService from '../services/TaskService'
 
 const service = new TaskService(db)
@@ -11,7 +12,9 @@ const tasks = {
     })
   },
   index: (req, res) => {
-    service.index(req.user.id, ({status, response}) => {
+    const options = req.query.include ? {include: eagerLoading(req.query.include, db)} : {}
+
+    service.index({userId: req.user.id, options}, ({status, response}) => {
       res.status(status).send(response)
     })
   },
