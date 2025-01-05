@@ -1,13 +1,13 @@
 import EmailBuilder from '../services/EmailBuilder'
 
-export default (collaborator, token) => {
+export default (invite, token, existingUser = false) => {
+  const action = existingUser ? ['Please login to accept the invite'] : ['Please use the link below to accept', `**${token}**`]
   const email = new EmailBuilder(
-    {to: collaborator.email, subject: 'Task Collaboration Invite'},
+    {to: invite.email, subject: 'Task Collaboration Invite'},
     [
-      `Hi ${collaborator.firstName},`,
-      `You have been invited to Checklist by ${collaborator.User.firstName} to collaborate on a task`,
-      'Please use the link below to accept',
-      `**${token}**`
+      `Hi ${invite.firstName},`,
+      `You have been invited to Checklist by ${invite.User.firstName} to collaborate on a task`,
+      ...action
     ]
   )
 

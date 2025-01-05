@@ -1,5 +1,6 @@
 import DataService from './DataService'
 import {dateToISOString, smtpServer} from '../../util/tools'
+import {digest} from '../../util/cryptTools'
 import logger from '../constants/logger'
 import inviteEmail from '../mailers/inviteEmail'
 
@@ -15,6 +16,7 @@ class InviteService {
 
     this.invite = new DataService(models.Invite)
     this.token = new DataService(models.Token)
+    this.user = new DataService(models.User)
   }
 
   #invite(id) {
@@ -23,21 +25,19 @@ class InviteService {
       {
         include: {
           model: this.models.Token,
-          include: [
-            {model: this.models.User},
-            {model: this.models.User, as: 'Collaborator'},
-            {model: this.models.Invite, as: 'Lead'}
-          ]
+          include: [this.models.User]
         }
       }
     )
   }
 
-  #emailPayload(token) {
-    const {Collaborator, Lead, User} = token
-    const collaborator = token.tokenableType === 'User' ? {...Collaborator, User} : {...Lead, User}
+  #user(email) { return this.user.show({emailDigest: digest(email)}) }
 
-    return [collaborator, token.value]
+  #emailPayload(invite, existingUser) {
+    const {User, ...token} = invite.Token
+    const collaborator = {...invite, User}
+
+    return [collaborator, token.value, !!existingUser]
   }
 
   send({id, currentUserId}, callback) {
@@ -45,8 +45,10 @@ class InviteService {
       const token = invite?.Token?.toJSON()
 
       if (token?.userId === currentUserId) {
-        this.invite.update(invite.id, {sentAt: dateToISOString(Date.now()), status: PENDING}).then(() => {
-          this.smtp.delay(3000).send(inviteEmail(...this.#emailPayload(token)))
+        this.#user(invite.email).then(user => {
+          this.invite.update(invite.id, {sentAt: dateToISOString(Date.now()), status: PENDING}).then(() => {
+            this.smtp.delay(3000).send(inviteEmail(...this.#emailPayload(invite.toJSON(), user)))
+          })
         })
       }
 
@@ -58,8 +60,11 @@ class InviteService {
     this.#invite(id).then(invite => {
       const token = invite?.Token?.toJSON()
 
-      if (token?.userId === currentUserId && invite.sentAt)
-        this.smtp.delay(3000).send(inviteEmail(...this.#emailPayload(token)))
+      if (token?.userId === currentUserId && invite.sentAt) {
+        this.#user(invite.email).then(user => {
+          this.smtp.delay(3000).send(inviteEmail(...this.#emailPayload(invite.toJSON(), user)))
+        })
+      }
 
       callback({status: ACCEPTED, response: {message: 'Invite resent', success: true}})
     })
