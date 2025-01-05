@@ -17,6 +17,9 @@ class InviteService {
     this.invite = new DataService(models.Invite)
     this.token = new DataService(models.Token)
     this.user = new DataService(models.User)
+
+    this.resend = this.resend.bind(this)
+    this.send = this.send.bind(this)
   }
 
   #invite(id) {
@@ -68,6 +71,19 @@ class InviteService {
 
       callback({status: ACCEPTED, response: {message: 'Invite resent', success: true}})
     })
+  }
+
+  update({id, currentUserId, payload: {action}}, callback) {
+    if (action) {
+      const sendResendInvite = this[action]
+
+      if (sendResendInvite)
+        sendResendInvite({id, currentUserId}, callback)
+      else
+        callback({status: ACCEPTED, response: {message: 'Invite sent', success: true}})
+    } else {
+      callback({status: ACCEPTED, response: {message: 'Invite sent', success: true}})
+    }
   }
 
   index(currentUserId, callback) {
