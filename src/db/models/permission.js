@@ -12,8 +12,8 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Permission.belongsTo(models.Task, {foreignKey: 'taskId', onDelete: 'CASCADE'})
-      Permission.belongsTo(models.User, {foreignKey: 'ownableId', constraints: false, scope: {ownableType: 'User'}})
-      Permission.belongsTo(models.Invite, {foreignKey: 'ownableId', constraints: false, scope: {ownableType: 'Invite'}})
+      Permission.belongsTo(models.User, {foreignKey: 'ownableId', constraints: false})
+      Permission.belongsTo(models.Invite, {foreignKey: 'ownableId', constraints: false})
     }
   }
   Permission.init({

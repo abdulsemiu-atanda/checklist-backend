@@ -49,6 +49,30 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATE
     }
   }, {
+    hooks: {
+      afterFind(result) {
+        if (result) {
+          const tasks = Array.isArray(result) ? result : [result]
+
+          for (const task of tasks) {
+            if (task.Permissions) {
+              for (const permission of task.Permissions) {
+                if (permission.ownableType === 'User' && permission.User !== undefined)
+                  permission.dataValues.ownable = permission.User
+                else if (permission.ownableType === 'Invite' && permission.Invite !== undefined)
+                  permission.dataValues.ownable = permission.Invite
+    
+                // To prevent mistakes:
+                delete permission.User
+                delete permission.dataValues.User
+                delete permission.Invite
+                delete permission.dataValues.Invite
+              }
+            }
+          }
+        }
+      }
+    },
     sequelize,
     modelName: 'Task',
   })
