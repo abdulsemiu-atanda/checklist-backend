@@ -76,6 +76,13 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.UUID
     }
   }, {
+    hooks: {
+      afterCreate(invite) {
+        // remove these attributes so they're not returned to user
+        delete invite.dataValues.emailDigest
+        delete invite.dataValues.tokenId
+      }
+    },
     sequelize,
     modelName: 'Invite',
   })
