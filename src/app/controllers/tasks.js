@@ -12,7 +12,8 @@ const tasks = {
     })
   },
   index: (req, res) => {
-    const options = req.query.include ? {include: eagerLoading(req.query.include, db)} : {}
+    const scope = {where: {userId: req.user.id}}
+    const options = req.query.include ? {...scope, include: eagerLoading(req.query.include, db)} : scope
 
     service.index({userId: req.user.id, options}, ({status, response}) => {
       res.status(status).send(response)
