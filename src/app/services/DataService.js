@@ -60,8 +60,8 @@ class DataService {
    * @param {Object} attributes - attributes to be updated on the specified record
    * @returns {Promise}
    */
-  update(id, attributes) {
-    return this.show({id}).then(record => record.update(attributes))
+  update(id, attributes, options = {}) {
+    return this.show({id}).then(record => record.update(attributes, options))
   }
 
   /**
