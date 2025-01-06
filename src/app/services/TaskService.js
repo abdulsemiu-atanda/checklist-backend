@@ -21,6 +21,7 @@ class TaskService {
     this.token = new DataService(models.Token)
     this.permission = new DataService(models.Permission)
     this.invite = new DataService(models.Invite)
+    this.sharedKey = new DataService(models.SharedKey)
   }
 
   #decryptTask({record, encryptor, userKey}) {
@@ -32,6 +33,22 @@ class TaskService {
   #session(userId) { return this.#keystore.retrieve(userId) }
 
   #userKey(userId) { return this.userKey.show({userId}) }
+
+  #sharedTasks({userId, encryptor}) {
+    const scope = {where: {ownableId: userId, ownableType: 'User'}}
+    const include = {include: this.models.Task}
+
+    return this.permission.index({...scope, ...include}).then(permissions => {
+      const tasks = permissions.map(async permission => {
+        const task = permission.Task.toJSON()
+        const sharedKey = await this.sharedKey.show({userId: task.userId}, {where: {ownableId: userId}})
+
+        return this.#decryptTask({record: task, encryptor, userKey: {privateKey: sharedKey.key}})
+      })
+
+      return Promise.all(tasks)
+    })
+  }
 
   create({task, userId}, callback) {
     this.#session(userId).then(session => {
@@ -55,11 +72,12 @@ class TaskService {
   index({userId, options = {}}, callback) {
     this.#session(userId).then(session => {
       this.#userKey(userId).then(userKey => {
-        this.task.index(options).then(records => {
+        this.task.index(options).then(async records => {
           const encryptor = new AsymmetricEncryptionService(session)
           const data = records.map(record => this.#decryptTask({record: record.toJSON(), encryptor, userKey}))
+          const shared = await this.#sharedTasks({userId, encryptor})
 
-          callback({status: OK, response: {data, success: true}})
+          callback({status: OK, response: {data: [...data, ...shared], success: true}})
         })
       }).catch(error => {
         logger.error(error.message)
