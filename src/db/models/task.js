@@ -32,7 +32,8 @@ export default (sequelize, DataTypes) => {
     },
     status: {
       allowNull: false,
-      type: DataTypes.ENUM(CREATED, STARTED, COMPLETED)
+      type: DataTypes.ENUM(CREATED, STARTED, COMPLETED),
+      defaultValue: CREATED
     },
     userId: {
       allowNull: false,
