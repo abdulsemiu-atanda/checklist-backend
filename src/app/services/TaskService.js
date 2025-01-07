@@ -34,6 +34,8 @@ class TaskService {
 
   #userKey(userId) { return this.userKey.show({userId}) }
 
+  #task(id) { return this.task.show({id}) }
+
   #sharedTasks({userId, encryptor}) {
     const scope = {where: {ownableId: userId, ownableType: 'User'}}
     const include = {include: this.models.Task}
@@ -108,20 +110,26 @@ class TaskService {
     this.#session(userId).then(session => {
       const {status, ...attributes} = payload
 
-      this.#userKey(userId).then(userKey => {
-        const encryptor = new AsymmetricEncryptionService(session)
-        const encrypted = this.#encryptTask({record: attributes, encryptor, userKey})
-        const task = status ? {...encrypted, status} : encrypted
+      this.#task(id).then(async task => {
+        const identifier = task.userId === userId ? userId : task.userId
+        const sharedKey = await this.sharedKey.show({userId: task.userId}, {where: {ownableId: userId}})
 
-        this.task.update(id, task).then(record => {
-          const data = this.#decryptTask({record: record.toJSON(), encryptor, userKey})
+        this.#userKey(identifier).then(userKey => {
+          const encryptor = new AsymmetricEncryptionService(session)
+          const encrypted = this.#encryptTask({record: attributes, encryptor, userKey})
+          const task = status ? {...encrypted, status} : encrypted
 
-          callback({status: OK, response: {data, success: true}})
-        }).catch(error => {
-          logger.error(error.message)
+          this.task.update(task.id, task).then(record => {
+            const keyPair = task.userId === userId ? userKey : {privateKey: sharedKey.key}
+            const data = this.#decryptTask({record: record.toJSON(), encryptor, userKey: keyPair})
 
-          callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+            callback({status: OK, response: {data, success: true}})
+          })
         })
+      }).catch(error => {
+        logger.error(error.message)
+
+        callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
       })
     })
   }
