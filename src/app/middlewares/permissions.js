@@ -12,6 +12,12 @@ const permissions = {
       next()
     else
       res.status(UNAUTHORIZED).send({message: INCOMPLETE_REQUEST, success: false})
+  },
+  isOwnerOrCollaborator: async (req, res, next) => {
+    if (await service.isOwnerOrCollaborator({id: req.params.id, userId: req.user.id}))
+      next()
+    else
+      res.status(UNAUTHORIZED).send({message: INCOMPLETE_REQUEST, success: false})
   }
 }
 
