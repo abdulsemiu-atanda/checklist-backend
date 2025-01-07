@@ -1,8 +1,12 @@
 import DataService from './DataService'
 
+import {EDIT} from '../../config/permissions'
+
 class PermissionService {
   constructor(models) {
     this.models = models
+
+    this.permission = new DataService(models.Permission)
     this.endpointMap = {
       tasks: new DataService(models.Task),
       users: new DataService(models.User)
@@ -31,6 +35,24 @@ class PermissionService {
         return record.userId === userId
 
       return true
+    })
+  }
+
+  #hasEditPermission({taskId, userId}) {
+    return this.permission.show({taskId}, {where: {ownableId: userId, ownableType: 'User'}}).then(permission => {
+      if (permission)
+        return permission.type === EDIT
+
+      return false
+    })
+  }
+
+  isOwnerOrCollaborator({id, userId}) {
+    return this.endpointMap.tasks.show({id}).then(task => {
+      if (task)
+        return task.userId === userId || this.#hasEditPermission({taskId: task.id, userId})
+
+      return false
     })
   }
 }
