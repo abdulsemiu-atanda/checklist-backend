@@ -1,3 +1,4 @@
+import AuthService from './AuthService'
 import DataService from './DataService'
 import {dateToISOString, redisKeystore, smtpServer} from '../../util/tools'
 import {digest, updatePrivateKey} from '../../util/cryptTools'
@@ -76,6 +77,31 @@ class InviteService {
       }
 
       callback({status: ACCEPTED, response: {message: 'Invite resent', success: true}})
+    })
+  }
+
+  acceptByToken({tokenId, user}, callback) {
+    this.models.sequelize.transaction(transaction => {
+      const options = {transaction}
+      const now = dateToISOString(Date.now())
+
+      this.token.show({id: tokenId}, {where: {type: SHARING}, include: this.models.Invite}).then(token => {
+        const email = token.Invite.email
+
+        if (token) {
+          this.invite.update(
+            token.Invite.id,
+            {acceptedAt: now, status: 'accepted'},
+            options
+          ).then(() => {
+            const auth = new AuthService(this.models)
+
+            auth.create({...user, email, confirmedAt: now}, callback)
+          })
+        } else {
+          callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
+        }
+      })
     })
   }
 
