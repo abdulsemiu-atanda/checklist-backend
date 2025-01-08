@@ -36,6 +36,23 @@ class TaskService {
 
   #task(id) { return this.task.show({id}) }
 
+  #updateTask({task, attributes: {status, ...payload}, currentUserId, encryptor}, callback) {
+    const isOwner = task.userId === currentUserId
+    const userId = isOwner ? currentUserId : task.userId
+
+    this.#userKey(userId).then(userKey => {
+      const encrypted = this.#encryptTask({record: payload, encryptor, userKey})
+      const data = status ? {...encrypted, status} : encrypted
+
+      this.task.update(task.id, data).then(async record => {
+        const keyPair = isOwner ? userKey : {privateKey: await this.sharedKey.show({userId: task.userId}, {where: {ownableId: currentUserId}}).key}
+        const decrypted = this.#decryptTask({record: record.toJSON(), encryptor, userKey: keyPair})
+
+        callback({status: OK, response: {data: decrypted, success: true}})
+      })
+    })
+  }
+
   #sharedTasks({userId, encryptor}) {
     const scope = {where: {ownableId: userId, ownableType: 'User'}}
     const include = {include: this.models.Task}
@@ -108,24 +125,10 @@ class TaskService {
 
   update({id, payload, userId}, callback) {
     this.#session(userId).then(session => {
-      const {status, ...attributes} = payload
+      this.#task(id).then(task => {
+        const encryptor = new AsymmetricEncryptionService(session)
 
-      this.#task(id).then(async task => {
-        const identifier = task.userId === userId ? userId : task.userId
-        const sharedKey = await this.sharedKey.show({userId: task.userId}, {where: {ownableId: userId}})
-
-        this.#userKey(identifier).then(userKey => {
-          const encryptor = new AsymmetricEncryptionService(session)
-          const encrypted = this.#encryptTask({record: attributes, encryptor, userKey})
-          const task = status ? {...encrypted, status} : encrypted
-
-          this.task.update(task.id, task).then(record => {
-            const keyPair = task.userId === userId ? userKey : {privateKey: sharedKey.key}
-            const data = this.#decryptTask({record: record.toJSON(), encryptor, userKey: keyPair})
-
-            callback({status: OK, response: {data, success: true}})
-          })
-        })
+        this.#updateTask({task, attributes: payload, currentUserId: userId, encryptor}, callback)
       }).catch(error => {
         logger.error(error.message)
 
