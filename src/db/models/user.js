@@ -98,10 +98,12 @@ export default (sequelize, DataTypes) => {
   }, {
     hooks: {
       afterCreate(user) {
-        const code = generateCode()
+        if (!user.confirmed) {
+          const code = generateCode()
 
-        user.createConfirmation({code})
-        smtp.delay(3000).send(confirmUserEmail(user.toJSON(), code))
+          user.createConfirmation({code})
+          smtp.delay(3000).send(confirmUserEmail(user.toJSON(), code))
+        }
       }
     },
     sequelize,
