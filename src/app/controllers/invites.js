@@ -13,6 +13,11 @@ const invites = {
     service.index(req.user.id, ({status, response}) => {
       res.status(status).send(response)
     })
+  },
+  accept: (req, res) => {
+    service.acceptByToken({tokenId: req.params.tokenId, user: req.body}, ({status, response}) => {
+      res.status(status).send(response)
+    })
   }
 }
 
