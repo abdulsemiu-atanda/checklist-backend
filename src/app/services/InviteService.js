@@ -81,27 +81,32 @@ class InviteService {
   }
 
   acceptByToken({tokenId, user}, callback) {
-    this.models.sequelize.transaction(transaction => {
-      const options = {transaction}
-      const now = dateToISOString(Date.now())
+    const now = dateToISOString(Date.now())
 
-      this.token.show({id: tokenId}, {where: {type: SHARING}, include: this.models.Invite}).then(token => {
-        const email = token.Invite.email
+    this.token.show({id: tokenId}, {where: {type: SHARING}, include: this.models.Invite}).then(token => {
+      const email = token.Invite.email
 
-        if (token) {
+      if (token && token.Invite.status !== 'accepted') {
+        this.permission.show({ownableId: token.Invite.id, ownableType: 'Invite'}).then(permission => {
           this.invite.update(
             token.Invite.id,
             {acceptedAt: now, status: 'accepted'},
-            options
           ).then(() => {
             const auth = new AuthService(this.models)
 
-            auth.create({...user, email, confirmedAt: now}, callback)
+            auth.create({...user, email, confirmedAt: now}, callback, ownableId => {
+              this.userKey.show({userId: token.userId}).then(parentKey => {
+                const key = updatePrivateKey({backupKey: parentKey.backupKey, passphrase: user.password})
+
+                this.sharedKey.create({key, ownableId, userId: token.userId})
+              })
+              this.permission.update(permission.id, {ownableId, ownableType: 'User'})
+            })
           })
-        } else {
-          callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
-        }
-      })
+        })
+      } else {
+        callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
+      }
     })
   }
 

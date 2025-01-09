@@ -67,7 +67,7 @@ class AuthService {
     })
   }
 
-  create(payload, callback) {
+  create(payload, callback, afterCreate) {
     if (this.#validEmail(payload.email)) {
       this.role.show({name: USER}).then(role => {
         if (role) {
@@ -81,14 +81,17 @@ class AuthService {
 
               this.#createUserKey({user, password: payload.password})
               this.keystore.insert({key: user.id, value: payload.password})
+
+              if (afterCreate)
+                afterCreate(user.id)
+
               callback({status: CREATED, response: {token, message: ACCOUNT_CREATION_SUCCESS, success: true}})
             } else {
               callback({status: CONFLICT, response: {message: INCOMPLETE_REQUEST, success: false}})
             }
-          }).catch(({errors}) => {
-            const [error] = errors
-
+          }).catch(error => {
             logger.error(error.message)
+
             callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
           })
         } else {
