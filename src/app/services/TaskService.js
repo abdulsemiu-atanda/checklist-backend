@@ -91,7 +91,7 @@ class TaskService {
     })
   }
 
-  index({userId, options = {}}, callback) {
+  index({userId, options}, callback) {
     this.#session(userId).then(session => {
       this.#userKey(userId).then(userKey => {
         return this.task.index(options).then(async records => {
