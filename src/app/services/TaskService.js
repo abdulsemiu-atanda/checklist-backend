@@ -40,12 +40,15 @@ class TaskService {
     const isOwner = task.userId === currentUserId
     const userId = isOwner ? currentUserId : task.userId
 
-    this.#userKey(userId).then(userKey => {
+    return Promise.all([
+      this.#userKey(userId),
+      this.sharedKey.show({userId: task.userId}, {where: {ownableId: currentUserId}})
+    ]).then(([userKey, sharedKey]) => {
       const encrypted = this.#encryptTask({record: payload, encryptor, userKey})
       const data = status ? {...encrypted, status} : encrypted
 
-      this.task.update(task.id, data).then(async record => {
-        const keyPair = isOwner ? userKey : {privateKey: await this.sharedKey.show({userId: task.userId}, {where: {ownableId: currentUserId}}).key}
+      return this.task.update(task.id, data).then(async record => {
+        const keyPair = isOwner ? userKey : {privateKey: sharedKey.key}
         const decrypted = this.#decryptTask({record: record.toJSON(), encryptor, userKey: keyPair})
 
         callback({status: OK, response: {data: decrypted, success: true}})
@@ -75,7 +78,7 @@ class TaskService {
         const encryptor = new AsymmetricEncryptionService(session)
         const encrypted = this.#encryptTask({record: task, encryptor, userKey})
 
-        this.task.create({...encrypted, userId}).then(([record]) => {
+        return this.task.create({...encrypted, userId}).then(([record]) => {
           const decrypted = this.#decryptTask({record: record.toJSON(), encryptor, userKey})
 
           callback({status: CREATED, response: {data: decrypted, success: true}})
@@ -91,7 +94,7 @@ class TaskService {
   index({userId, options = {}}, callback) {
     this.#session(userId).then(session => {
       this.#userKey(userId).then(userKey => {
-        this.task.index(options).then(async records => {
+        return this.task.index(options).then(async records => {
           const encryptor = new AsymmetricEncryptionService(session)
           const data = records.map(record => this.#decryptTask({record: record.toJSON(), encryptor, userKey}))
           const shared = await this.#sharedTasks({userId, encryptor})
@@ -128,7 +131,7 @@ class TaskService {
       this.#task(id).then(task => {
         const encryptor = new AsymmetricEncryptionService(session)
 
-        this.#updateTask({task, attributes: payload, currentUserId: userId, encryptor}, callback)
+        return this.#updateTask({task, attributes: payload, currentUserId: userId, encryptor}, callback)
       }).catch(error => {
         logger.error(error.message)
 
