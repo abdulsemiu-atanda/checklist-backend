@@ -1,12 +1,20 @@
 import {fakerYO_NG as faker} from '@faker-js/faker'
 
-import DataService from '../../src/app/services/DataService'
-import db from '../../src/db/models'
-import {isEmpty} from '../../src/util/tools'
+import AsymmetricEncryptionService from '../../src/app/services/AsymmetricEncryptionService'
 import {adminUser, fakeUser} from './users'
+import DataService from '../../src/app/services/DataService'
+import {dateToISOString, isEmpty} from '../../src/util/tools'
+import db from '../../src/db/models'
+import {generateCode} from '../../src/util/authTools'
+import logger from '../../src/app/constants/logger'
+import {digest, encryptFields, secureHash, updatePrivateKey} from '../../src/util/cryptTools'
 
 import {ADMIN, USER} from '../../src/config/roles'
-import AsymmetricEncryptionService from '../../src/app/services/AsymmetricEncryptionService'
+import {SHARING} from '../../src/config/tokens'
+import {ACCEPTED} from '../../src/config/invites'
+import { READ } from '../../src/config/permissions'
+
+const user = new DataService(db.User)
 
 const defaultUser = trait => {
   if (trait === ADMIN)
@@ -18,7 +26,6 @@ const defaultUser = trait => {
 const createUser = ({data, trait}) => {
   const encryptor = new AsymmetricEncryptionService(data.password || fakeUser.password)
   const role = new DataService(db.Role)
-  const user = new DataService(db.User)
   const roleName = trait === ADMIN ? ADMIN : USER
 
   switch(trait) {
@@ -53,4 +60,43 @@ export const create = ({type, data = {}, trait = ''}) => {
 export const seedRecords = async ({count = 1, type}) => {
   for (let step = 0; step < count; step++)
     await create({type})
+}
+
+export const setupTaskCollaboration = ({inviter, invitee, permissionType = READ}) => {
+  return Promise.all([
+    user.show({emailDigest: digest(inviter.email.toLowerCase())}, {include: db.UserKey}),
+    create({type: 'users', data: invitee})
+  ]).then(async ([record, [collaborator]]) => {
+    const owner = record ? record : await create({type: 'users', data: inviter, trait: 'withUserKey'})[0]
+
+    logger.info(`Created owner with user id ${owner.id}`)
+    logger.info(`Created collaborator with user id ${collaborator.id}`)
+    const userKey = owner.UserKey.toJSON()
+    const encryptor = new AsymmetricEncryptionService(inviter.password)
+    const data = {title: faker.book.title(), description: faker.lorem.paragraphs(2)}
+    const encrypted = encryptFields({record: data, encryptor, userKey})
+    const key = updatePrivateKey({backupKey: userKey.backupKey, passphrase: invitee.password})
+
+    return Promise.all([
+      owner.createTask(encrypted),
+      owner.createSharedKey({key, ownableId: collaborator.id}),
+      owner.createToken({value: secureHash(generateCode(9)), type: SHARING})
+    ]).then(([task, _sharedKey, token]) => {
+      const now = dateToISOString(Date.now())
+
+      return Promise.all([
+        task.createPermission({ownableId: collaborator.id, ownableType: 'User', type: permissionType}),
+        token.createInvite({...invitee, status: ACCEPTED, acceptedAt: now, sentAt: now})
+      ]).then(() => {
+        logger.info('Successfully set up collaboration')
+
+        return task
+      })
+    })
+  }).catch(error => {
+    logger.error(error.message)
+    console.log(error)
+
+    logger.info('Something went wrong setting up collaboration')
+  })
 }
