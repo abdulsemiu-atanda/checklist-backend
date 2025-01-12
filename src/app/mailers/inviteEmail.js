@@ -1,6 +1,6 @@
 import EmailBuilder from '../services/EmailBuilder'
 
-export default (invite, token, existingUser = false) => {
+export default (invite, token, existingUser) => {
   const action = existingUser ? ['Please login to accept the invite'] : ['Please use the link below to accept', `**${token}**`]
   const email = new EmailBuilder(
     {to: invite.email, subject: 'Task Collaboration Invite'},
