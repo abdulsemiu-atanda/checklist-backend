@@ -67,7 +67,7 @@ export const setupTaskCollaboration = ({inviter, invitee, permissionType = READ}
     user.show({emailDigest: digest(inviter.email.toLowerCase())}, {include: db.UserKey}),
     create({type: 'users', data: invitee})
   ]).then(async ([record, [collaborator]]) => {
-    const owner = record ? record : await create({type: 'users', data: inviter, trait: 'withUserKey'})[0]
+    const owner = record ? record : (await create({type: 'users', data: inviter, trait: 'withUserKey'}))[0]
 
     logger.info(`Created owner with user id ${owner.id}`)
     logger.info(`Created collaborator with user id ${collaborator.id}`)
