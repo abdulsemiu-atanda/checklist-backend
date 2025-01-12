@@ -153,27 +153,25 @@ class TaskService {
       if (isEmpty(invites) || invites.every(invite => invite.Token.userId !== currentUserId)) {
         this.user.show({id: currentUserId}, {include: this.models.UserKey}).then(user => {
           if (user?.UserKey) {
-            try {
-              const value = secureHash(generateCode(9), 'base64url')
+            const value = secureHash(generateCode(9), 'base64url')
 
-              this.token.create(
-                {value, type: SHARING, userId: user.id, Invite: payload.invite},
-                {include: this.models.Invite}
-              ).then(([token]) => {
-                this.permission.create({ownableId: token.Invite.id, ownableType: 'Invite', ...payload.permission}).then(() => {
-                  callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
-                })
+            return this.token.create(
+              {value, type: SHARING, userId: user.id, Invite: payload.invite},
+              {include: this.models.Invite}
+            ).then(([token]) => {
+              return this.permission.create({ownableId: token.Invite.id, ownableType: 'Invite', ...payload.permission}).then(() => {
+                callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
               })
-            } catch (error) {
-              logger.error(error.message)
-
-              callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
-            }
+            })
           } else {
             logger.error(`UserKey missing for user ${currentUserId}`)
 
             callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
           }
+        }).catch(error => {
+          logger.error(error.message)
+
+          callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
         })
       } else {
         callback({status: ACCEPTED, response: {message: 'Collaboration invite created', success: true}}) 

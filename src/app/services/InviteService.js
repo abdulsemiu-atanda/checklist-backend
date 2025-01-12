@@ -113,40 +113,36 @@ class InviteService {
   }
 
   accept({id, currentUserId}, callback) {
-    this.models.sequelize.transaction(transaction => {
-      const changeOptions = {transaction}
-
-      this.#invite(id).then(invite => {
-        if (invite.Token.userId === currentUserId || invite.status !== PENDING) {
-          callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
-        } else {
-          this.user.show({id: currentUserId}).then(currentUser => {
-            if (currentUser.email === invite.email) {
-              this.#keystore.retrieve(currentUserId).then(session => {
-                this.invite.update(invite.id, {acceptedAt: dateToISOString(Date.now()), status: 'accepted'}, changeOptions)
-                this.permission.show({ownableId: invite.id, ownableType: 'Invite'}).then(permission => {
-                  this.permission.update(permission.id, {ownableId: currentUser.id, ownableType: 'User'}, changeOptions)
-                })
-
-                this.userKey.show({userId: invite.Token.userId}).then(parentKey => {
-                  const key = updatePrivateKey({backupKey: parentKey.backupKey, passphrase: session})
-
-                  this.sharedKey.create({key, userId: invite.Token.userId, ownableId: currentUser.id}, changeOptions)
-                    .then(() => {
-                      callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
-                    })
-                })
+    this.#invite(id).then(invite => {
+      if (invite.Token.userId === currentUserId || invite.status !== PENDING) {
+        callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
+      } else {
+        return this.user.show({id: currentUserId}).then(currentUser => {
+          if (currentUser.email === invite.email) {
+            return this.#keystore.retrieve(currentUserId).then(session => {
+              this.invite.update(invite.id, {acceptedAt: dateToISOString(Date.now()), status: 'accepted'})
+              this.permission.show({ownableId: invite.id, ownableType: 'Invite'}).then(permission => {
+                this.permission.update(permission.id, {ownableId: currentUser.id, ownableType: 'User'})
               })
-            } else {
-              callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
-            }
-          })
-        }
-      }).catch(error => {
-        logger.error(error.message)
 
-        callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: true}})
-      })
+              return this.userKey.show({userId: invite.Token.userId}).then(parentKey => {
+                const key = updatePrivateKey({backupKey: parentKey.backupKey, passphrase: session})
+
+                return this.sharedKey.create({key, userId: invite.Token.userId, ownableId: currentUser.id})
+                  .then(() => {
+                    callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
+                  })
+              })
+            })
+          } else {
+            callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
+          }
+        })
+      }
+    }).catch(error => {
+      logger.error(error.message)
+
+      callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: true}})
     })
   }
 
