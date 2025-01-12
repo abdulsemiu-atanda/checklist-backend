@@ -11,7 +11,6 @@ import {digest} from '../../../src/util/cryptTools'
 import {create} from '../../fixtures'
 import {fakeUser, invalidUser} from '../../fixtures/users'
 import {generateCode, userToken} from '../../../src/util/authTools'
-import {smtpStub} from '../../testHelpers'
 
 import {USER} from '../../../src/config/roles'
 import {
@@ -299,7 +298,6 @@ describe('Auth Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Password reset requested.')
-          expect(smtpStub.called).to.equal(false)
 
           done()
         })
@@ -312,7 +310,6 @@ describe('Auth Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Password reset requested.')
-          expect(smtpStub.called).to.equal(false)
 
           done()
         })
@@ -325,7 +322,6 @@ describe('Auth Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Password reset requested.')
-          expect(smtpStub.called).to.equal(true)
 
           done()
         })

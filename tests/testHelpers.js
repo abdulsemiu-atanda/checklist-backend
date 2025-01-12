@@ -1,11 +1,15 @@
+import nodemailer from 'nodemailer'
 import sinon from 'sinon'
+import {v4 as uuidV4} from 'uuid'
 
 import * as cryptTools from '../src/util/cryptTools'
 import logger from '../src/app/constants/logger'
-import {smtpServer} from '../src/util/tools'
 
-export const smtpStub = sinon.stub(smtpServer(), 'delay').returns({
-  send: email => logger.info(`Simulated sending an email to: ${email.to}`)
+export const smtpStub = sinon.stub(nodemailer, 'createTransport').returns({
+  sendMail: (email, callback) => {
+    logger.info(`Simulated sending an email to: ${email.to}`)
+    callback(null, {messageId: uuidV4()})
+  }
 })
 
 export function memoize(func) {

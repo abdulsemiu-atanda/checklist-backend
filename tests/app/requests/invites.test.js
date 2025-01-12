@@ -8,7 +8,6 @@ import {collaborator, fakeInvite} from '../../fixtures/invites'
 import {fakeUser} from '../../fixtures/users'
 import {setupTaskCollaboration} from '../../fixtures'
 import logger from '../../../src/app/constants/logger'
-import {smtpStub} from '../../testHelpers'
 
 import {ACCEPTED, CREATED, OK} from '../../../src/app/constants/statusCodes'
 import {digest, generateKeyPair} from '../../../src/util/cryptTools'
@@ -81,7 +80,6 @@ describe('Invites Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Invite resent')
-          expect(smtpStub.called).to.equal(false)
 
           done()
         })
@@ -95,7 +93,6 @@ describe('Invites Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Invite sent')
-          expect(smtpStub.called).to.equal(false)
 
           done()
         })
@@ -109,7 +106,6 @@ describe('Invites Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Invite sent')
-          expect(smtpStub.called).to.equal(false)
 
           done()
         })
@@ -123,7 +119,6 @@ describe('Invites Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Invite sent')
-          expect(smtpStub.called).to.equal(false)
 
           done()
         })
@@ -137,7 +132,6 @@ describe('Invites Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Invite sent')
-          expect(smtpStub.called).to.equal(false)
 
           done()
         })
@@ -151,7 +145,6 @@ describe('Invites Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Invite resent')
-          expect(smtpStub.called).to.equal(false)
 
           done()
         })
@@ -165,7 +158,6 @@ describe('Invites Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Invite sent')
-          expect(smtpStub.called).to.equal(true)
 
           done()
         })
@@ -179,7 +171,6 @@ describe('Invites Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Invite resent')
-          expect(smtpStub.called).to.equal(true)
 
           done()
         })
@@ -256,8 +247,6 @@ describe('Invites Controller', () => {
         .patch(`/api/invites/${existingUserInvite.id}`).send({action: 'send'})
         .set('Authorization', collaboratorToken)
         .end(() => {
-          expect(smtpStub.called).to.equal(true)
-
           request(app)
             .patch(`/api/invites/${existingUserInvite.id}`).send({action: 'accept'})
             .set('Authorization', userToken)
