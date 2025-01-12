@@ -58,11 +58,12 @@ class InviteService {
         this.#user(invite.email).then(user => {
           this.invite.update(invite.id, {sentAt: dateToISOString(Date.now()), status: PENDING}).then(() => {
             this.smtp.delay(3000).send(inviteEmail(...this.#emailPayload(invite.toJSON(), user)))
+            callback({status: ACCEPTED, response: {message: 'Invite sent', success: true}})
           })
         })
+      } else {
+        callback({status: ACCEPTED, response: {message: 'Invite sent', success: true}})
       }
-
-      callback({status: ACCEPTED, response: {message: 'Invite sent', success: true}})
     })
   }
 
@@ -73,10 +74,11 @@ class InviteService {
       if (token?.userId === currentUserId && invite.sentAt) {
         this.#user(invite.email).then(user => {
           this.smtp.delay(3000).send(inviteEmail(...this.#emailPayload(invite.toJSON(), user)))
+          callback({status: ACCEPTED, response: {message: 'Invite resent', success: true}})
         })
+      } else {
+        callback({status: ACCEPTED, response: {message: 'Invite resent', success: true}})
       }
-
-      callback({status: ACCEPTED, response: {message: 'Invite resent', success: true}})
     })
   }
 
