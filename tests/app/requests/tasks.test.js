@@ -219,6 +219,32 @@ describe('Tasks Controller:', () => {
     })
 
     describe('collaboration', () => {
+      it('return unprocessable if task id is invalid', done => {
+        request(app)
+          .patch(`/api/tasks/${uuidV4()}`).send({status: STARTED})
+          .set('Authorization', authToken)
+          .end((error, response) => {
+            expect(error).to.not.exist
+            expect(response.statusCode).to.equal(UNAUTHORIZED)
+            expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
+
+            done()
+          })
+      })
+
+      it('return unprocessable if non collaborator tries to update task', done => {
+        request(app)
+          .patch(`/api/tasks/${data.id}`).send({status: STARTED})
+          .set('Authorization', authToken)
+          .end((error, response) => {
+            expect(error).to.not.exist
+            expect(response.statusCode).to.equal(UNAUTHORIZED)
+            expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
+
+            done()
+          })
+      })
+
       it('allows user with edit permission edit shared task', done => {
         request(app)
           .patch(`/api/tasks/${autreTask.id}`).send({status: 'started'})
