@@ -1,6 +1,6 @@
 import logger from '../src/app/constants/logger'
 import {redisKeystore} from '../src/util/tools'
-import {smtpStub} from './testHelpers'
+import {smtpStub, generateKeyPairStub} from './testHelpers'
 
 const keystore = redisKeystore()
 
@@ -15,6 +15,7 @@ export const mochaHooks = {
   },
   afterEach() {
     smtpStub.resetHistory()
+    generateKeyPairStub.resetHistory()
   },
   afterAll(done) {
     keystore.client.quit().then(() => {

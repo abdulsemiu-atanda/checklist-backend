@@ -25,12 +25,17 @@ export default (sequelize, DataTypes) => {
       })
       User.hasOne(models.Confirmation, {foreignKey: 'userId'})
       User.hasMany(models.Token, {foreignKey: 'userId'})
-      User.hasMany(
-        models.Token,
-        {foreignKey: 'tokenableId', as: 'Collaborator', constraints: false, scope: {tokenableType: 'User'}}
-      )
       User.hasOne(models.UserKey, {foreignKey: 'userId'})
       User.hasMany(models.Task, {foreignKey: 'userId'})
+      User.hasMany(models.SharedKey, {foreignKey: 'userId'})
+      User.hasMany(
+        models.SharedKey,
+        {foreignKey: 'ownableId', as: 'Owner', constraints: false}
+      )
+      User.hasMany(
+        models.Permission,
+        {foreignKey: 'ownableId', constraints: false, scope: {ownableType: 'User'}}
+      )
     }
   }
   User.init({
@@ -93,10 +98,12 @@ export default (sequelize, DataTypes) => {
   }, {
     hooks: {
       afterCreate(user) {
-        const code = generateCode()
+        if (!user.confirmed) {
+          const code = generateCode()
 
-        user.createConfirmation({code})
-        smtp.delay(3000).send(confirmUserEmail(user.toJSON(), code))
+          user.createConfirmation({code})
+          smtp.delay(3000).send(confirmUserEmail(user.toJSON(), code))
+        }
       }
     },
     sequelize,

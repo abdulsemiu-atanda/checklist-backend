@@ -2,10 +2,11 @@ import {expect} from 'chai'
 import {fakerYO_NG as faker} from '@faker-js/faker'
 
 import AsymmetricEncryptionService from '../../../src/app/services/AsymmetricEncryptionService'
+import {fakeUser} from '../../fixtures/users'
 
 const MODE = 'asymmetric'
 const data = faker.book.title()
-const passphrase = faker.internet.password()
+const passphrase = fakeUser.password
 const service = new AsymmetricEncryptionService(passphrase, MODE)
 
 let keyPair

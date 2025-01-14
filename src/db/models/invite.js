@@ -17,9 +17,9 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Invite.belongsTo(models.Token, {foreignKey: 'tokenId', onDelete: 'CASCADE'})
-      Invite.hasOne(
-        models.Token,
-        {foreignKey: 'tokenableId', as: 'Lead', constraints: false, scope: {tokenableType: 'Invite'}}
+      Invite.hasMany(
+        models.Permission,
+        {foreignKey: 'ownableId', constraints: false, scope: {ownableType: 'Invite'}}
       )
     }
   }
@@ -28,6 +28,26 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4
+    },
+    firstName: {
+      allowNull: false,
+      type: DataTypes.STRING,
+      get() {
+        return encryptor.decrypt(this.getDataValue('firstName'))
+      },
+      set(value) {
+        this.setDataValue('firstName', encryptor.encrypt(value))
+      }
+    },
+    lastName: {
+      allowNull: false,
+      type: DataTypes.STRING,
+      get() {
+        return encryptor.decrypt(this.getDataValue('lastName'))
+      },
+      set(value) {
+        this.setDataValue('lastName', encryptor.encrypt(value))
+      }
     },
     email: {
       allowNull: false,
@@ -56,6 +76,13 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.UUID
     }
   }, {
+    hooks: {
+      afterCreate(invite) {
+        // remove these attributes so they're not returned to user
+        delete invite.dataValues.emailDigest
+        delete invite.dataValues.tokenId
+      }
+    },
     sequelize,
     modelName: 'Invite',
   })

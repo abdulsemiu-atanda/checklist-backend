@@ -1,28 +1,17 @@
 'use strict';
-
-const {CREATED, STARTED, COMPLETED} = require("../../config/tasks");
-
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Tasks', {
+    await queryInterface.createTable('SharedKeys', {
       id: {
         allowNull: false,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
         type: Sequelize.UUID
       },
-      title: {
+      key: {
         allowNull: false,
         type: Sequelize.TEXT
-      },
-      description: {
-        allowNull: false,
-        type: Sequelize.TEXT
-      },
-      status: {
-        allowNull: false,
-        type: Sequelize.ENUM(CREATED, STARTED, COMPLETED)
       },
       userId: {
         allowNull: false,
@@ -34,6 +23,10 @@ module.exports = {
           as: 'userId',
         },
       },
+      ownableId: {
+        allowNull: false,
+        type: Sequelize.UUID
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -42,9 +35,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
-    })
+    });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Tasks')
+    await queryInterface.dropTable('SharedKeys');
   }
-}
+};

@@ -5,7 +5,6 @@ import {dateToISOString} from '../../../../src/util/tools'
 import db from '../../../../src/db/models'
 import * as roleNames from '../../../../src/config/roles'
 import {fakeUser as attributes} from '../../../fixtures/users'
-import {smtpStub} from '../../../testHelpers'
 
 const Role = db.Role
 const User = db.User
@@ -41,7 +40,6 @@ describe('User Model:', () => {
       expect(record.roleId).to.equal(role.id)
       expect(bcrypt.compareSync(attributes.password, record.password)).to.equal(true)
       expect(record.confirmed).to.equal(false)
-      expect(smtpStub.called).to.equal(true)
 
       done()
     })

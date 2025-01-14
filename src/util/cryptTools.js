@@ -21,8 +21,8 @@ export const decryptRSAPrivateKey = (encryptedPrivateKey, passphrase) =>
 export const encryptRSAPrivateKey = ({privateKey, passphrase}) =>
   forge.pki.encryptRsaPrivateKey(privateKey, passphrase)
 
-export const secureHash = value =>
-  crypto.createHmac('sha256', process.env.ENCRYPTION_KEY).update(value).digest('hex')
+export const secureHash = (value, encoding = 'hex') =>
+  crypto.createHmac('sha256', process.env.ENCRYPTION_KEY).update(value).digest(encoding)
 
 export const keyFingerprint = (key, delimiter = ':') =>
   secureHash(key).match(/\w{2}/g).join(delimiter).toUpperCase()
@@ -78,3 +78,34 @@ export const updatePrivateKey = ({backupKey, passphrase}) => forge.util.encode64
     passphrase
   })
 )
+
+/**
+ * Retruns the record with its fields encrypted
+ * @param {{
+ * record: Object,
+ * encryptor: import('../app/services/AsymmetricEncryptionService').default,
+ * userKey: {publicKey: String, fingerprint: String}}}
+ * @returns {Object}
+ */
+export const encryptFields = ({record, encryptor, userKey: {publicKey, fingerprint}}) => Object.entries(record).reduce(
+  (dictionary, [key, data]) => ({
+    ...dictionary,
+    [key]: encryptor.encrypt({publicKey, data, fingerprint})
+  }),
+  {}
+)
+
+/**
+ * Retruns the record with its fields encrypted
+ * @param {{
+ * record: Object,
+ * encryptor: import('../app/services/AsymmetricEncryptionService').default,
+ * userKey: {privateKey: String}}}
+ * @returns {Object}
+ */
+export const decryptFields = ({record, encryptor, userKey: {privateKey}, fields = []}) => fields.reduce((dictionary, field) => {
+  if (record[field])
+    return {...dictionary, [field]: encryptor.decrypt({privateKey, encrypted: record[field]})}
+  else
+    return dictionary
+}, record)
