@@ -43,6 +43,11 @@ const auth = {
     service.logout(req.user, ({status, response}) => {
       res.status(status).send(response)
     })
+  },
+  refreshToken: (req, res) => {
+    service.refreshToken({token: req.params.refreshToken, user: req.user}, ({status, response}) => {
+      res.status(status).send(response)
+    })
   }
 }
 

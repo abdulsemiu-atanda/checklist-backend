@@ -4,6 +4,7 @@ import DataService from '../app/services/DataService'
 import db from '../db/models'
 import {ADMIN} from '../config/roles'
 import logger from '../app/constants/logger'
+import {secureHash} from './cryptTools'
 
 export const userToken = (user, expiresIn = '1h') => jwt.sign(
   {id: user.id, roleId: user.roleId},
@@ -34,3 +35,5 @@ export const isAdmin = user => {
       return false
     })
 }
+
+export const refreshToken = user => secureHash(`${user.id}${user.roleId}`, 'base64url')

@@ -6,7 +6,7 @@ import DataService from './DataService'
 import {dateToISOString, redisKeystore, smtpServer} from '../../util/tools'
 import {digest, updatePrivateKey} from '../../util/cryptTools'
 import {formatData} from '../../util/dataTools'
-import {generateCode, userToken} from '../../util/authTools'
+import {generateCode, refreshToken, userToken} from '../../util/authTools'
 import logger from '../constants/logger'
 import resetPasswordEmail from '../mailers/resetPasswordEmail'
 
@@ -136,6 +136,7 @@ class AuthService {
               status: OK,
               response: {
                 token,
+                refreshToken: refreshToken(user.toJSON()),
                 user: formatData(
                   user.toJSON(),
                   ['id', 'firstName', 'lastName', 'email', 'confirmed', 'createdAt', 'updatedAt']
@@ -231,6 +232,23 @@ class AuthService {
     this.keystore.remove(user.id).then(
       () => callback({status: ACCEPTED, response: {message: 'Logout Successful.', success: true}})
     )
+  }
+
+  refreshToken({token, user}, callback) {
+    const check = refreshToken(user)
+
+    this.keystore.retrieve(user.id).then(session => {
+      if (check === token) {
+        this.user.show({id: user.id}).then(currentUser => {
+          const authToken = userToken(currentUser.toJSON())
+
+          this.keystore.insert({key: currentUser.id, value: session})
+          callback({status: OK, response: {token: authToken, message: 'Session extended successfully.', success: true}})
+        })
+      } else {
+        callback({status: UNAUTHORIZED, response: {message: INCOMPLETE_REQUEST, success: false}})
+      }
+    })
   }
 }
 

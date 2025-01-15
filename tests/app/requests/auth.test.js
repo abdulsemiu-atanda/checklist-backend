@@ -40,7 +40,9 @@ const testUser = {...fakeUser, email: faker.internet.email()}
 const fakeToken = userToken({id: uuidV4(), roleId: uuidV4})
 
 let authToken
+let refreshToken
 let token
+let data
 
 describe('Auth Controller', () => {
   before(done => {
@@ -163,6 +165,9 @@ describe('Auth Controller', () => {
       request(app)
         .post('/api/auth/sign-in').send(fakeUser)
         .end((error, response) => {
+          refreshToken = response.body.refreshToken
+          data = response.body.user
+
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(OK)
           expect(response.body.message).to.equal(LOGIN_SUCCESS)
@@ -399,6 +404,35 @@ describe('Auth Controller', () => {
 
             done()
           })
+        })
+    })
+  })
+
+  describe('GET /api/auth/:refreshToken', () => {
+    it('returns unauthorized when refresh token is forged', done => {
+      request(app)
+        .get(`/api/auth/${encodeURIComponent(digest(`${data.id}${data.roleId}`))}`)
+        .set('Authorization', authToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNAUTHORIZED)
+          expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('successfully refreshes authentication token', done => {
+      request(app)
+        .get(`/api/auth/${refreshToken}`)
+        .set('Authorization', authToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.token).to.exist
+          expect(response.body.message).to.equal('Session extended successfully.')
+
+          done()
         })
     })
   })
