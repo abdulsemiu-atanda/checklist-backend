@@ -13,5 +13,6 @@ auth.route('/reset-password').post(authController.resetPassword)
 auth.route('/validate-token/:token').get(authController.validateResetToken)
 auth.route('/change-password').post(authController.changePassword)
 auth.route('/logout').get(middleware.isLoggedIn, authController.logout)
+auth.route('/:refreshToken').get(middleware.isLoggedIn, authController.refreshToken)
 
 export default auth

@@ -1,4 +1,5 @@
 import bodyParser from 'body-parser'
+import cors from 'cors'
 import fs from 'fs'
 import morgan from 'morgan'
 import express from 'express'
@@ -15,6 +16,7 @@ const keystore = redisKeystore()
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
+app.use(cors({origin: process.env.ALLOWED_ORIGINS.split(',')}))
 
 app.disable('x-powered-by')
 app.use(morgan('tiny'))
