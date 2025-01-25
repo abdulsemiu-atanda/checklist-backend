@@ -20,11 +20,11 @@ class TfaService {
     this.tfaConfig = new DataService(models.TfaConfig)
   }
 
-  #label(user) {
+  #issuer() {
     if (process.env.NODE_ENV === 'development')
-      return `${user.firstName} Local (${user.email})`
+      return `${this.#APP_NAME} Local`
 
-    return `${user.firstName} (${user.email})`
+    return this.#APP_NAME
   }
 
   #totp({url, user = {}}) {
@@ -33,8 +33,8 @@ class TfaService {
     } else {
       return new OTPAuth.TOTP({
         algorithm: 'SHA256',
-        issuer: this.#APP_NAME,
-        label: this.#label(user),
+        issuer: this.#issuer(),
+        label: `${user.firstName} (${user.email})`,
         secret: new OTPAuth.Secret({size: 32})
       })
     }
