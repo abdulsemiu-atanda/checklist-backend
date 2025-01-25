@@ -93,7 +93,7 @@ class AuthService {
 
     // insert pre auth token that expires in 10mins
     this.keystore.insert({key: preAuthToken, value: `${user.id}|${password}`, expiresIn: 600})
-    callback({status: OK, response: {preAuthToken, success: true}})
+    callback({status: OK, response: {preAuthToken, data: user.TfaConfig, success: true}})
   }
 
   create(payload, callback, afterCreate) {
@@ -156,7 +156,13 @@ class AuthService {
     if (this.#validEmail(payload.email)) {
       this.user.show(
         {emailDigest: digest(payload.email.toLowerCase())},
-        {include: [this.models.UserKey, this.models.Role, this.models.TfaConfig]}
+        {
+          include: [
+            this.models.UserKey,
+            this.models.Role,
+            {model: this.models.TfaConfig, attributes: {exclude: ['backupCode', 'url']}}
+          ]
+        }
       ).then(user => {
         if (user) {
           if (bcrypt.compareSync(payload.password, user.password)) {
