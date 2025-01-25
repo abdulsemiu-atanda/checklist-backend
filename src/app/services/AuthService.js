@@ -86,7 +86,7 @@ class AuthService {
     })
   }
 
-  #needsPreAuth(user) { return (user.TfaConfig?.status === ACTIVE || user.Role?.name === ADMIN) }
+  #needsPreAuth(user) { return (user.TfaConfig?.status === ACTIVE || user.Role.name === ADMIN) }
 
   #preAuthResponse({user, password}, callback) {
     const preAuthToken = secureHash(user.id)
