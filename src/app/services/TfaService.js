@@ -2,7 +2,7 @@ import * as OTPAuth from 'otpauth'
 
 import DataService from './DataService'
 import {formatData} from '../../util/dataTools'
-import {isEmpty} from '../../util/tools'
+import {isEmpty, redisKeystore} from '../../util/tools'
 import logger from '../constants/logger'
 import {generateCode, refreshToken, userToken} from '../../util/authTools'
 import {secureHash} from '../../util/cryptTools'
@@ -16,6 +16,7 @@ class TfaService {
 
   constructor(models) {
     this.models = models
+    this.keystore = redisKeystore()
     this.user = new DataService(models.User)
     this.tfaConfig = new DataService(models.TfaConfig)
   }
@@ -56,6 +57,18 @@ class TfaService {
     }
   }
 
+  #preAuth(token) {
+    if (token) {
+      return this.keystore.retrieve(token).then(data => {
+        const [userId] = data.split('|')
+
+        return userId
+      })
+    } else {
+      return Promise.resolve(null)
+    }
+  }
+
   activate({tfaConfig, payload}, callback) {
     const {code} = payload
     const isValid = Boolean(this.#validate({url: tfaConfig.url, token: code}))
@@ -73,17 +86,19 @@ class TfaService {
     }
   }
 
-  create({userId}, callback) {
-    this.user.show({id: userId}, {include: this.models.TfaConfig}).then(currentUser => {
-      if (currentUser.TfaConfig) {
-        callback({status: CREATED, response: {data: currentUser.TfaConfig.toJSON(), success: true}})
-      } else {
-        return currentUser.createTfaConfig({
-          url: this.#totp({user: currentUser.toJSON()}).toString()
-        }).then(tfaConfig => {
-          callback({status: CREATED, response: {data: tfaConfig.toJSON(), success: true}})
-        })
-      }
+  create({userId, preAuth}, callback) {
+    this.#preAuth(preAuth).then(data => {
+      return this.user.show({id: data || userId}, {include: this.models.TfaConfig}).then(currentUser => {
+        if (currentUser.TfaConfig) {
+          callback({status: CREATED, response: {data: currentUser.TfaConfig.toJSON(), success: true}})
+        } else {
+          return currentUser.createTfaConfig({
+            url: this.#totp({user: currentUser.toJSON()}).toString()
+          }).then(tfaConfig => {
+            callback({status: CREATED, response: {data: tfaConfig.toJSON(), success: true}})
+          })
+        }
+      })
     }).catch(error => {
       logger.error(error.message)
 
