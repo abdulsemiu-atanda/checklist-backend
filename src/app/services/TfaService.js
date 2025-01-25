@@ -4,7 +4,7 @@ import DataService from './DataService'
 import {formatData} from '../../util/dataTools'
 import {isEmpty} from '../../util/tools'
 import logger from '../constants/logger'
-import {refreshToken, userToken} from '../../util/authTools'
+import {generateCode, refreshToken, userToken} from '../../util/authTools'
 import {secureHash} from '../../util/cryptTools'
 
 import {CREATED, OK, UNAUTHORIZED, UNPROCESSABLE} from '../constants/statusCodes'
@@ -56,6 +56,23 @@ class TfaService {
     }
   }
 
+  activate({tfaConfig, payload}, callback) {
+    const {code} = payload
+    const isValid = Boolean(this.#validate({url: tfaConfig.url, token: code}))
+
+    if (isValid) {
+      this.tfaConfig.update(tfaConfig.id, {status: ACTIVE}).then(record => {
+        callback({status: OK, response: {data: {...record.toJSON(), backupCode: generateCode(16)}, success: true}})
+      }).catch(error => {
+        logger.error(error.message)
+
+        callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+      })
+    } else {
+      callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+    }
+  }
+
   create({userId}, callback) {
     this.user.show({id: userId}, {include: this.models.TfaConfig}).then(currentUser => {
       if (currentUser.TfaConfig) {
@@ -95,24 +112,28 @@ class TfaService {
     })
   }
 
-  update({id, attributes: {status, backupCode}}, callback) {
+  update({id, attributes: {status, backupCode}, activate}, callback) {
     this.tfaConfig.show({id}).then(tfaConfig => {
-      let payload = {}
-
-      if (status)
-        payload = {...payload, status}
-
-      if (backupCode)
-        payload = {...payload, backupCode}
-
-      if (isEmpty(payload)) {
-        callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+      if (activate) {
+        this.activate({tfaConfig: tfaConfig.toJSON(), payload: activate}, callback)
       } else {
-        return tfaConfig.update(payload)
-          .then(record => callback({
-            status: OK,
-            response: {data: record.toJSON(), success: true}
-          }))
+        let payload = {}
+
+        if (status)
+          payload = {...payload, status}
+
+        if (backupCode)
+          payload = {...payload, backupCode}
+
+        if (isEmpty(payload)) {
+          callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+        } else {
+          return tfaConfig.update(payload)
+            .then(record => callback({
+              status: OK,
+              response: {data: record.toJSON(), success: true}
+            }))
+        }
       }
     }).catch(error => {
       logger.error(error.message)
