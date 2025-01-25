@@ -31,9 +31,11 @@ import {
   LOGIN_SUCCESS,
   UNPROCESSABLE_REQUEST
 } from '../../../src/app/constants/messages'
+import {ACTIVE} from '../../../src/config/tfaStatuses'
 
 const role = new DataService(db.Role)
 const user = new DataService(db.User)
+const tfaConfig = new DataService(db.TfaConfig)
 
 const code = generateCode()
 const testUser = {...fakeUser, email: faker.internet.email()}
@@ -194,6 +196,22 @@ describe('Auth Controller', () => {
 
           done()
         })
+    })
+
+    it('returns pre auth token when user has TFA enabled', done => {
+      tfaConfig.create({userId: data.id, status: ACTIVE}).then(() => {
+        request(app)
+          .post('/api/auth/sign-in').send(fakeUser)
+          .end((error, response) => {
+            expect(error).to.not.exist
+            expect(response.statusCode).to.equal(OK)
+            expect(response.body.token).to.not.exist
+            expect(response.body.refreshToken).to.not.exist
+            expect(response.body.preAuthToken).to.exist
+
+            done()
+          })
+      })
     })
   })
 
