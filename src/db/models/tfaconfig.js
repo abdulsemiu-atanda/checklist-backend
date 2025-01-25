@@ -15,6 +15,11 @@ export default (sequelize, DataTypes) => {
     }
   }
   TfaConfig.init({
+    id: {
+      primaryKey: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4
+    },
     status: {
       allowNull: false,
       type: DataTypes.ENUM(ACTIVE, DISABLED, INITIAL),
