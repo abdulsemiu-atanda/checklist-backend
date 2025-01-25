@@ -4,8 +4,6 @@ import {v4 as uuidV4} from 'uuid'
 
 import * as cryptTools from '../src/util/cryptTools'
 import logger from '../src/app/constants/logger'
-import {redisKeystore} from '../src/util/tools'
-import {userToken} from '../src/util/authTools'
 
 export const smtpStub = sinon.stub(nodemailer, 'createTransport').returns({
   sendMail: (email, callback) => {
@@ -36,15 +34,3 @@ export function memoize(func) {
 export const memoizedGenerateKeyPair = memoize(cryptTools.generateKeyPair)
 
 export const generateKeyPairStub = sinon.stub(cryptTools, 'generateKeyPair').callsFake(memoizedGenerateKeyPair)
-
-export const tokenGenerator = async ({user, password}) => {
-  const keystore = redisKeystore()
-
-  if (process.env.NODE_ENV === 'test') {
-    await keystore.insert({key: user.id, value: password})
-
-    return userToken(user)
-  } else {
-    throw new Error('tokenGenerator should only be used in test environment.')
-  }
-}

@@ -9,7 +9,7 @@ import {fakeUser, adminUser} from '../../fixtures/users'
 import {ADMIN, USER} from '../../../src/config/roles'
 import {OK, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
 import {UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
-import {tokenGenerator} from '../../testHelpers'
+import {tokenGenerator} from '../../tools'
 
 let adminToken
 let userToken
