@@ -5,10 +5,11 @@ import {redisKeystore} from '../../util/tools'
 import {UNAUTHORIZED, UNPROCESSABLE} from '../constants/statusCodes'
 import {INCOMPLETE_REQUEST, UNPROCESSABLE_REQUEST} from '../constants/messages'
 
+const keystore = redisKeystore()
+
 const auth = {
   isLoggedIn: async (req, res, next) => {
     try {
-      const keystore = redisKeystore()
       const decoded = verifyToken(req.headers.authorization)
 
       if (await keystore.retrieve(decoded.id)) {
@@ -44,6 +45,7 @@ const auth = {
 
       if (await isValidPreAuth(token)) {
         req.preAuth = token
+        req.userId = (await keystore.retrieve(token)).split('|')[0]
 
         next()
       } else {
@@ -61,6 +63,7 @@ const auth = {
 
       if (await isValidPreAuth(token)) {
         req.preAuth = token
+        req.userId = (await keystore.retrieve(token)).split('|')[0]
 
         next()
       } else {
