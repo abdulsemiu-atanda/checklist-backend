@@ -54,6 +54,23 @@ const auth = {
 
       res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
     }
+  },
+  isAuthenticated: async (req, res, next) => {
+    try {
+      const token = req.headers.authorization
+
+      if (await isValidPreAuth(token)) {
+        req.preAuth = token
+
+        next()
+      } else {
+        await auth.isLoggedIn(req, res, next)
+      }
+    } catch (error) {
+      logger.error(error.message)
+
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+    }
   }
 }
 
