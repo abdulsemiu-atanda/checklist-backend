@@ -11,6 +11,9 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.UUID
       },
+      backupCode: {
+        type: Sequelize.STRING
+      },
       status: {
         allowNull: false,
         type: Sequelize.ENUM(ACTIVE, DISABLED, INITIAL),

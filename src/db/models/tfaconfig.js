@@ -1,6 +1,7 @@
 import {Model} from 'sequelize'
 
 import SymmetricEncryptionService from '../../app/services/SymmetricEncryptionService'
+import {secureHash} from '../../util/cryptTools'
 
 import {ACTIVE, DISABLED, INITIAL} from '../../config/tfaStatuses'
 
@@ -23,6 +24,13 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4
+    },
+    backupCode: {
+      type: DataTypes.STRING,
+      set(value) {
+        if (value)
+          this.setDataValue('backupCode', secureHash(value, 'base64url'))
+      }
     },
     status: {
       allowNull: false,
