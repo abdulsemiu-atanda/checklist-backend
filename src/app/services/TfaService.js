@@ -69,20 +69,23 @@ class TfaService {
     }
   }
 
-  activate({tfaConfig, payload}, callback) {
+  activate({tfaConfig: {User: user, ...config}, payload, password}, callback) {
     const {code} = payload
     const isValid = Boolean(this.#validate({url: tfaConfig.url, token: code}))
 
     if (isValid) {
-      this.tfaConfig.update(tfaConfig.id, {status: ACTIVE}).then(record => {
-        callback({status: OK, response: {data: {...record.toJSON(), backupCode: generateCode(16)}, success: true}})
+      this.tfaConfig.update(config.id, {status: ACTIVE}).then(record => {
+        const authResponse = this.#response(user)
+
+        this.keystore.insert({key: user.id, value: password})
+        callback({status: OK, response: {...authResponse, tfaConfig: {...record.toJSON(), backupCode: generateCode(16)}}})
       }).catch(error => {
         logger.error(error.message)
 
         callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
       })
     } else {
-      callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+      callback({status: UNAUTHORIZED, response: {message: INCOMPLETE_REQUEST, success: false}})
     }
   }
 
@@ -130,10 +133,16 @@ class TfaService {
     })
   }
 
-  update({id, attributes: {status, backupCode, activate}}, callback) {
-    this.tfaConfig.show({id}).then(tfaConfig => {
+  update({id, preAuth, attributes: {status, backupCode, activate}}, callback) {
+    this.tfaConfig.show({id}, {include: this.models.User}).then(tfaConfig => {
       if (activate) {
-        this.activate({tfaConfig: tfaConfig.toJSON(), payload: activate}, callback)
+        // eslint-disable-next-line no-unused-vars
+        this.#preAuth(preAuth).then(([_, password]) => {
+          this.activate(
+            {tfaConfig: tfaConfig.toJSON(), payload: activate, password},
+            callback
+          )
+        })
       } else {
         let payload = {}
 
