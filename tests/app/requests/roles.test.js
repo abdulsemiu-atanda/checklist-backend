@@ -8,6 +8,7 @@ import {OK, UNAUTHORIZED, UNPROCESSABLE} from '../../../src/app/constants/status
 import {INCOMPLETE_REQUEST, UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
 import {ADMIN, USER} from '../../../src/config/roles'
 import {adminUser, fakeUser} from '../../fixtures/users'
+import {tokenGenerator} from '../../testHelpers'
 
 const role = new DataService(db.Role)
 const user = new DataService(db.User)
@@ -26,11 +27,9 @@ describe('Roles Controller', () => {
               userToken = response.body.token
 
               role.create({name: ADMIN}).then(([adminRole]) => {
-                user.create({...adminUser, roleId: adminRole.id}).then(() => {
-                  request(app)
-                  .post('/api/auth/sign-in').send(adminUser)
-                  .then((response) => {
-                    adminToken = response.body.token
+                user.create({...adminUser, roleId: adminRole.id}).then(([record]) => {
+                  tokenGenerator({user: record.toJSON(), password: adminUser.password}).then(token => {
+                    adminToken = token
 
                     done()
                   })

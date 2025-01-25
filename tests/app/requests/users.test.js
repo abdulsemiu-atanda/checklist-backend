@@ -9,6 +9,7 @@ import {fakeUser, adminUser} from '../../fixtures/users'
 import {ADMIN, USER} from '../../../src/config/roles'
 import {OK, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
 import {UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
+import {tokenGenerator} from '../../testHelpers'
 
 let adminToken
 let userToken
@@ -16,22 +17,20 @@ let userToken
 describe('Users Controller', () => {
   before(done => {
     db.sequelize.sync({force: true}).then(() => {
-      create({type: 'users', trait: ADMIN}).then(() => {
-        create({type: 'users', trait: USER, data: fakeUser}).then(() => {
-          seedRecords({count: 10, type: 'users'}).then(() => {
-            request(app)
-              .post('/api/auth/sign-in').send(fakeUser)
-              .then(response => {
-                userToken = response.body.token
+      create({type: 'users', trait: ADMIN}).then(([record]) => {
+        tokenGenerator({user: record.toJSON(), password: adminUser.password}).then(token => {
+          adminToken = token
 
-                request(app)
-                  .post('/api/auth/sign-in').send(adminUser)
-                  .then(response => {
-                    adminToken = response.body.token
+          create({type: 'users', trait: USER, data: fakeUser}).then(() => {
+            seedRecords({count: 10, type: 'users'}).then(() => {
+              request(app)
+                .post('/api/auth/sign-in').send(fakeUser)
+                .then(response => {
+                  userToken = response.body.token
 
-                    done()
-                  })
-              })
+                  done()
+                })
+            })
           })
         })
       })
