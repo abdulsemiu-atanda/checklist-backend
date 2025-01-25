@@ -67,6 +67,24 @@ class AuthService {
     })
   }
 
+  #success(user, callback) {
+    const token = userToken(user)
+
+    callback({
+      status: OK,
+      response: {
+        token,
+        refreshToken: refreshToken(user),
+        user: formatData(
+          user,
+          ['id', 'firstName', 'lastName', 'email', 'confirmed', 'createdAt', 'updatedAt']
+        ),
+        message: LOGIN_SUCCESS,
+        success: true
+      }
+    })
+  }
+
   create(payload, callback, afterCreate) {
     if (this.#validEmail(payload.email)) {
       this.role.show({name: USER}).then(role => {
@@ -128,23 +146,9 @@ class AuthService {
       this.user.show({emailDigest: digest(payload.email.toLowerCase())}, {include: this.models.UserKey}).then(user => {
         if (user) {
           if (bcrypt.compareSync(payload.password, user.password)) {
-            const token = userToken(user.toJSON())
-
             this.#createUserKey({user, password: payload.password})
             this.keystore.insert({key: user.id, value: payload.password})
-            callback({
-              status: OK,
-              response: {
-                token,
-                refreshToken: refreshToken(user.toJSON()),
-                user: formatData(
-                  user.toJSON(),
-                  ['id', 'firstName', 'lastName', 'email', 'confirmed', 'createdAt', 'updatedAt']
-                ),
-                message: LOGIN_SUCCESS,
-                success: true
-              }
-            })
+            this.#success(user.toJSON(), callback)
           } else {
             callback({status: UNAUTHORIZED, response: {message: INCORRECT_EMAIL_PASSWORD, success: false}})
           }
