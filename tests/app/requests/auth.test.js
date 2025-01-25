@@ -208,6 +208,7 @@ describe('Auth Controller', () => {
             expect(response.body.token).to.not.exist
             expect(response.body.refreshToken).to.not.exist
             expect(response.body.preAuthToken).to.exist
+            expect(response.body.data.userId).to.equal(data.id)
 
             done()
           })
