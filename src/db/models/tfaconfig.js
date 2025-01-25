@@ -30,6 +30,8 @@ export default (sequelize, DataTypes) => {
       set(value) {
         if (value)
           this.setDataValue('backupCode', secureHash(value, 'base64url'))
+        else if (value !== undefined)
+          this.setDataValue('url', value)
       }
     },
     status: {
@@ -50,6 +52,8 @@ export default (sequelize, DataTypes) => {
       set(value) {
         if (value)
           this.setDataValue('url', encryptor.encrypt(value))
+        else if (value !== undefined)
+          this.setDataValue('url', value)
       }
     },
     userId: {
