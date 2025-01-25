@@ -60,12 +60,12 @@ class TfaService {
   #preAuth(token) {
     if (token) {
       return this.keystore.retrieve(token).then(data => {
-        const [userId] = data.split('|')
+        const [userId, password] = data.split('|')
 
-        return userId
+        return [userId, password]
       })
     } else {
-      return Promise.resolve(null)
+      return Promise.resolve([])
     }
   }
 
@@ -87,7 +87,7 @@ class TfaService {
   }
 
   create({userId, preAuth}, callback) {
-    this.#preAuth(preAuth).then(data => {
+    this.#preAuth(preAuth).then(([data]) => {
       return this.user.show({id: data || userId}, {include: this.models.TfaConfig}).then(currentUser => {
         if (currentUser.TfaConfig) {
           callback({status: CREATED, response: {data: currentUser.TfaConfig.toJSON(), success: true}})
@@ -106,24 +106,27 @@ class TfaService {
     })
   }
 
-  login({userId, payload: {code, backupCode}}, callback) {
-    this.user.show({id: userId}, {include: this.models.TfaConfig}).then(currentUser => {
-      const {TfaConfig: tfaConfig, ...user} = currentUser.toJSON()
+  login({preAuth, payload: {code, backupCode}}, callback) {
+    this.#preAuth(preAuth).then(([userId, password]) => {
+      this.user.show({id: userId}, {include: this.models.TfaConfig}).then(currentUser => {
+        const {TfaConfig: tfaConfig, ...user} = currentUser.toJSON()
 
-      if (tfaConfig?.status === ACTIVE) {
-        const isValid = code ? Boolean(this.#validate({url: tfaConfig.url, token: code})) : (secureHash(backupCode, 'base64url') === tfaConfig.backupCode)
+        if (tfaConfig?.status === ACTIVE) {
+          const isValid = code ? Boolean(this.#validate({url: tfaConfig.url, token: code})) : (secureHash(backupCode, 'base64url') === tfaConfig.backupCode)
 
-        if (isValid) {
-          if (backupCode)
-            tfaConfig.update({status: DISABLED, backupCode: null, url: null})
+          if (isValid) {
+            if (backupCode)
+              tfaConfig.update({status: DISABLED, backupCode: null, url: null})
 
-          callback({status: OK, response: this.#response(user)})
+            this.keystore.insert({key: currentUser.id, value: password})
+            callback({status: OK, response: this.#response(user)})
+          } else {
+            callback({status: UNAUTHORIZED, response: {message: INCOMPLETE_REQUEST, success: false}})
+          }
         } else {
           callback({status: UNAUTHORIZED, response: {message: INCOMPLETE_REQUEST, success: false}})
         }
-      } else {
-        callback({status: UNAUTHORIZED, response: {message: INCOMPLETE_REQUEST, success: false}})
-      }
+      })
     })
   }
 
