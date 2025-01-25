@@ -44,9 +44,10 @@ export const isValidPreAuth = token => {
 
   return keystore.retrieve(token).then(data => {
     if (data) {
+      const decrypted = keystore.encryptor.decrypt(token)
       const [userId] = data.split('|')
 
-      return token === secureHash(userId)
+      return decrypted === secureHash(userId)
     }
 
     return false

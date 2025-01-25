@@ -89,7 +89,7 @@ class AuthService {
   #needsPreAuth(user) { return (user.TfaConfig?.status === ACTIVE || user.Role.name === ADMIN) }
 
   #preAuthResponse({user, password}, callback) {
-    const preAuthToken = secureHash(user.id)
+    const preAuthToken = this.keystore.encryptor.encrypt(secureHash(user.id))
 
     // insert pre auth token that expires in 10mins
     this.keystore.insert({key: preAuthToken, value: `${user.id}|${password}`, expiresIn: 600})
