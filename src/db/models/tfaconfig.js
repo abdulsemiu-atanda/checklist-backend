@@ -1,6 +1,10 @@
 import {Model} from 'sequelize'
 
+import SymmetricEncryptionService from '../../app/services/SymmetricEncryptionService'
+
 import {ACTIVE, DISABLED, INITIAL} from '../../config/tfaStatuses'
+
+const encryptor = new SymmetricEncryptionService(process.env.DATA_ENCRYPTION_KEY)
 
 export default (sequelize, DataTypes) => {
   class TfaConfig extends Model {
@@ -25,7 +29,21 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(ACTIVE, DISABLED, INITIAL),
       defaultValue: INITIAL
     },
-    url: DataTypes.STRING,
+    url: {
+      type: DataTypes.STRING,
+      get() {
+        const value = this.getDataValue('url')
+
+        if (value)
+          return encryptor.decrypt(value)
+
+        return value
+      },
+      set(value) {
+        if (value)
+          this.setDataValue('url', encryptor.encrypt(value))
+      }
+    },
     userId: {
       allowNull: false,
       type: DataTypes.UUID
