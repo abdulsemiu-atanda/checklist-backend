@@ -127,7 +127,7 @@ class TfaService {
     })
   }
 
-  update({id, attributes: {status, backupCode}, activate}, callback) {
+  update({id, attributes: {status, backupCode, activate}}, callback) {
     this.tfaConfig.show({id}).then(tfaConfig => {
       if (activate) {
         this.activate({tfaConfig: tfaConfig.toJSON(), payload: activate}, callback)
