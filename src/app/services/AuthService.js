@@ -4,13 +4,14 @@ import AsymmetricEncryptionService from './AsymmetricEncryptionService'
 import confirmUserEmail from '../mailers/confirmUserEmail'
 import DataService from './DataService'
 import {dateToISOString, redisKeystore, smtpServer} from '../../util/tools'
-import {digest, updatePrivateKey} from '../../util/cryptTools'
+import {digest, secureHash, updatePrivateKey} from '../../util/cryptTools'
 import {formatData} from '../../util/dataTools'
 import {generateCode, refreshToken, userToken} from '../../util/authTools'
 import logger from '../constants/logger'
 import resetPasswordEmail from '../mailers/resetPasswordEmail'
 
-import {USER} from '../../config/roles'
+import {ACTIVE} from '../../config/tfaStatuses'
+import {ADMIN, USER} from '../../config/roles'
 import {ACCEPTED, BAD_REQUEST, CONFLICT, CREATED, OK, UNAUTHORIZED, UNPROCESSABLE} from '../constants/statusCodes'
 import {
   ACCOUNT_CONFIRMED,
@@ -85,6 +86,16 @@ class AuthService {
     })
   }
 
+  #needsPreAuth(user) { return (user.TfaConfig?.status === ACTIVE || user.Role?.name === ADMIN) }
+
+  #preAuthResponse({user, password}, callback) {
+    const preAuthToken = secureHash(user.id)
+
+    // insert pre auth token that expires in 10mins
+    this.keystore.insert({key: preAuthToken, value: `${user.id}|${password}`, expiresIn: 600})
+    callback({status: OK, response: {preAuthToken, success: true}})
+  }
+
   create(payload, callback, afterCreate) {
     if (this.#validEmail(payload.email)) {
       this.role.show({name: USER}).then(role => {
@@ -143,12 +154,21 @@ class AuthService {
 
   login(payload, callback) {
     if (this.#validEmail(payload.email)) {
-      this.user.show({emailDigest: digest(payload.email.toLowerCase())}, {include: this.models.UserKey}).then(user => {
+      this.user.show(
+        {emailDigest: digest(payload.email.toLowerCase())},
+        {include: [this.models.UserKey, this.models.Role, this.models.TfaConfig]}
+      ).then(user => {
         if (user) {
           if (bcrypt.compareSync(payload.password, user.password)) {
+            const currentUser = user.toJSON()
             this.#createUserKey({user, password: payload.password})
-            this.keystore.insert({key: user.id, value: payload.password})
-            this.#success(user.toJSON(), callback)
+
+            if (this.#needsPreAuth(currentUser)) {
+              this.#preAuthResponse({user: currentUser, password: payload.password}, callback)
+            } else {
+              this.keystore.insert({key: user.id, value: payload.password})
+              this.#success(currentUser, callback)
+            }
           } else {
             callback({status: UNAUTHORIZED, response: {message: INCORRECT_EMAIL_PASSWORD, success: false}})
           }
