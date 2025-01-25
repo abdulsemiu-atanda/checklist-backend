@@ -37,8 +37,14 @@ export const memoizedGenerateKeyPair = memoize(cryptTools.generateKeyPair)
 
 export const generateKeyPairStub = sinon.stub(cryptTools, 'generateKeyPair').callsFake(memoizedGenerateKeyPair)
 
-export const tokenGenerator = ({user, password}) => {
+export const tokenGenerator = async ({user, password}) => {
   const keystore = redisKeystore()
 
-  return keystore.insert({key: user.id, value: password}).then(() => userToken(user))
+  if (process.env.NODE_ENV === 'test') {
+    await keystore.insert({key: user.id, value: password})
+
+    return userToken(user)
+  } else {
+    throw new Error('tokenGenerator should only be used in test environment.')
+  }
 }
