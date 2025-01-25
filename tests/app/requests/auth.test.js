@@ -9,10 +9,10 @@ import DataService from '../../../src/app/services/DataService'
 import db from '../../../src/db/models'
 import {digest} from '../../../src/util/cryptTools'
 import {create} from '../../fixtures'
-import {fakeUser, invalidUser} from '../../fixtures/users'
+import {adminUser, fakeUser, invalidUser} from '../../fixtures/users'
 import {generateCode, userToken} from '../../../src/util/authTools'
 
-import {USER} from '../../../src/config/roles'
+import {ADMIN, USER} from '../../../src/config/roles'
 import {
   ACCEPTED,
   BAD_REQUEST,
@@ -47,7 +47,9 @@ let data
 describe('Auth Controller', () => {
   before(done => {
     db.sequelize.sync({force: true}).then(() => {
-      done()
+      create({type: 'users', trait: ADMIN}).then(() => {
+        done()
+      })
     })
   })
 
@@ -175,6 +177,20 @@ describe('Auth Controller', () => {
           expect(response.body.user.firstName).to.equal(fakeUser.firstName)
           expect(response.body.user.lastName).to.equal(fakeUser.lastName)
           expect(response.body.user.confirmed).to.equal(false)
+
+          done()
+        })
+    })
+
+    it('returns pre auth token is user is an admin', done => {
+      request(app)
+        .post('/api/auth/sign-in').send(adminUser)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.token).to.not.exist
+          expect(response.body.refreshToken).to.not.exist
+          expect(response.body.preAuthToken).to.exist
 
           done()
         })
