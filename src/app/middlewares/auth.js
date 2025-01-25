@@ -1,5 +1,5 @@
 import logger from '../constants/logger'
-import {isAdmin, verifyToken} from '../../util/authTools'
+import {isAdmin, isValidPreAuth, verifyToken} from '../../util/authTools'
 import {redisKeystore} from '../../util/tools'
 
 import {UNAUTHORIZED, UNPROCESSABLE} from '../constants/statusCodes'
@@ -32,6 +32,23 @@ const auth = {
         next()
       else
         res.status(UNAUTHORIZED).send({message: INCOMPLETE_REQUEST, success: false})
+    } catch (error) {
+      logger.error(error.message)
+
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+    }
+  },
+  isValidPreAuth: async (req, res, next) => {
+    try {
+      const token = req.headers.authorization
+
+      if (await isValidPreAuth(token)) {
+        req.preAuth = token
+
+        next()
+      } else {
+        res.status(UNAUTHORIZED).send({message: INCOMPLETE_REQUEST, success: false})
+      }
     } catch (error) {
       logger.error(error.message)
 
