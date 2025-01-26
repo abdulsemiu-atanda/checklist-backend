@@ -532,6 +532,31 @@ describe('Auth Controller', () => {
         })
     })
 
+    it('throws an error if pre auth token is invalid', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({code: otp.generate()})
+        .set('Authorization', digest('123456'))
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNAUTHORIZED)
+          expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('throws an error if pre auth token is not specified', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({code: otp.generate()})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
     it('successfully logs in user with valid tfa code', done => {
       request(app)
         .post('/api/auth/tfa-login').send({code: otp.generate()})
