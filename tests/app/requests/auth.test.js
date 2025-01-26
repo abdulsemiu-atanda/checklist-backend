@@ -32,12 +32,13 @@ import {
   LOGIN_SUCCESS,
   UNPROCESSABLE_REQUEST
 } from '../../../src/app/constants/messages'
-import {ACTIVE} from '../../../src/config/tfaStatuses'
+import {ACTIVE, DISABLED} from '../../../src/config/tfaStatuses'
 
 const role = new DataService(db.Role)
 const user = new DataService(db.User)
 const tfaConfig = new DataService(db.TfaConfig)
 
+const backupCode = generateCode(16)
 const code = generateCode()
 const testUser = {...fakeUser, email: faker.internet.email()}
 const fakeToken = userToken({id: uuidV4(), roleId: uuidV4})
@@ -203,7 +204,12 @@ describe('Auth Controller', () => {
     })
 
     it('returns pre auth token when user has TFA enabled', done => {
-      tfaConfig.create({userId: data.id, status: ACTIVE, url: otp.toString()}).then(() => {
+      tfaConfig.create({
+        backupCode,
+        userId: data.id,
+        status: ACTIVE,
+        url: otp.toString()
+      }).then(() => {
         request(app)
           .post('/api/auth/sign-in').send(fakeUser)
           .end((error, response) => {
@@ -569,6 +575,27 @@ describe('Auth Controller', () => {
           expect(response.body.refreshToken).to.exist
 
           done()
+        })
+    })
+
+    it('successfully logs in with backup code and disables tfa', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({backupCode})
+        .set('Authorization', preAuthToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.user.id).to.equal(data.id)
+          expect(response.body.token).to.exist
+          expect(response.body.refreshToken).to.exist
+
+          tfaConfig.show({userId: data.id}).then(record => {
+            expect(record.status).to.equal(DISABLED)
+            expect(record.url).to.equal(null)
+            expect(record.backupCode).to.equal(null)
+
+            done()
+          })
         })
     })
   })
