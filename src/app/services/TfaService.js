@@ -76,14 +76,14 @@ class TfaService {
 
   activate({tfaConfig: {User: user, ...config}, payload, password}, callback) {
     const {code} = payload
-    const isValid = Boolean(this.#validate({url: tfaConfig.url, token: code}))
+    const isValid = Boolean(this.#validate({url: config.url, token: code}))
 
     if (isValid) {
       this.tfaConfig.update(config.id, {status: ACTIVE}).then(record => {
-        const authResponse = this.#response(user)
+        const authResponse = password ? this.#response(user) : {}
 
         this.keystore.insert({key: user.id, value: password})
-        callback({status: OK, response: {...authResponse, tfaConfig: {...record.toJSON(), backupCode: generateCode(16)}}})
+        callback({status: OK, response: {...authResponse, data: {...record.toJSON(), backupCode: generateCode(16)}}})
       }).catch(error => {
         logger.error(error.message)
 
@@ -138,7 +138,7 @@ class TfaService {
     })
   }
 
-  update({id, preAuth, attributes: {status, backupCode, activate}}, callback) {
+  update({id, preAuth = '', attributes: {status, backupCode, activate}}, callback) {
     this.tfaConfig.show({id}, {include: this.models.User}).then(tfaConfig => {
       if (activate) {
         // eslint-disable-next-line no-unused-vars
