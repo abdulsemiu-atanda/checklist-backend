@@ -595,7 +595,20 @@ describe('Auth Controller', () => {
             expect(record.backupCode).to.equal(null)
 
             done()
-          })
+          }).catch(() => { done() })
+        })
+    })
+
+    it('returns an error if tfa config is not active', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({code: otp.generate()})
+        .set('Authorization', preAuthToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNAUTHORIZED)
+          expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
+
+          done()
         })
     })
   })
