@@ -1,3 +1,5 @@
+import * as OtpAuth from 'otpauth'
+
 import {redisKeystore} from '../src/util/tools'
 import {userToken} from '../src/util/authTools'
 
@@ -12,3 +14,8 @@ export const tokenGenerator = async ({user, password}) => {
     throw new Error('tokenGenerator should only be used in test environment.')
   }
 }
+
+export const totp = user => new OtpAuth.TOTP({
+  issuer: 'Checklist Test',
+  label: `${user.firstName} (${user.email})`
+})
