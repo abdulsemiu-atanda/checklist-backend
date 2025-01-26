@@ -80,9 +80,10 @@ class TfaService {
 
     if (isValid) {
       this.tfaConfig.update(config.id, {status: ACTIVE}).then(record => {
-        const authResponse = password ? this.#response(user) : {}
+        const authResponse = password ? this.#response(user) : {success: true}
 
-        this.keystore.insert({key: user.id, value: password})
+        if (password)
+          this.keystore.insert({key: user.id, value: password})
         callback({status: OK, response: {...authResponse, data: {...record.toJSON(), backupCode: generateCode(16)}}})
       }).catch(error => {
         logger.error(error.message)
