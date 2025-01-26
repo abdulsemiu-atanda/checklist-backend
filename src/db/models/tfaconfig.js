@@ -40,7 +40,7 @@ export default (sequelize, DataTypes) => {
       defaultValue: INITIAL
     },
     url: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       get() {
         const value = this.getDataValue('url')
 

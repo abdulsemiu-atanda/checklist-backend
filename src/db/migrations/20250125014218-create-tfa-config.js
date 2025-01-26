@@ -20,7 +20,7 @@ module.exports = {
         defaultValue: INITIAL
       },
       url: {
-        type: Sequelize.STRING
+        type: Sequelize.TEXT
       },
       userId: {
         allowNull: false,
