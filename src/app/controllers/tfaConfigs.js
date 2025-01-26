@@ -10,9 +10,11 @@ const tfaConfigs = {
     })
   },
   update: (req, res) => {
-    service.update({id: req.params.id, attributes: req.body}, ({status, response}) => {
-      res.status(status).send(response)
-    })
+    service.update(
+      {id: req.params.id, preAuth: req.preAuth, attributes: req.body},
+      ({status, response}) => {
+        res.status(status).send(response)
+      })
   },
   login: (req, res) => {
     service.login({preAuth: req.preAuth, payload: req.body}, ({status, response}) => {

@@ -10,6 +10,7 @@ class PermissionService {
     this.endpointMap = {
       auth: new DataService(models.TfaConfig),
       tasks: new DataService(models.Task),
+      'tfa-configs': new DataService(models.TfaConfig),
       users: new DataService(models.User)
     }
   }
