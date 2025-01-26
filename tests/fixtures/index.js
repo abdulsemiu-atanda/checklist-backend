@@ -95,7 +95,6 @@ export const setupTaskCollaboration = ({inviter, invitee, permissionType = READ}
     })
   }).catch(error => {
     logger.error(error.message)
-    console.log(error)
 
     logger.info('Something went wrong setting up collaboration')
   })
