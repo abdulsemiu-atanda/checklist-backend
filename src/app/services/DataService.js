@@ -30,7 +30,7 @@ class DataService {
 
   /**
    * Finds a single resource and returns its value
-   * @param {Object} identifier - key value for finding a resource
+   * @param {{[x: string]: Number | String}} identifier - key value for finding a resource
    * @param {Object} options - find options, addition clauses can be defined in unsing `where` attribute (optional)
    * @returns {Promise}
    */
@@ -57,7 +57,7 @@ class DataService {
   /**
    * Updates record with specified id
    * @param {String} id - record id
-   * @param {Object} attributes - attributes to be updated on the specified record
+   * @param {{[x: string]: Number | String | Date}} attributes - attributes to be updated on the specified record
    * @returns {Promise}
    */
   update(id, attributes, options = {}) {
