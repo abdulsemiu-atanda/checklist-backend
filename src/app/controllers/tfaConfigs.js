@@ -5,7 +5,7 @@ const service = new TfaService(db)
 
 const tfaConfigs = {
   create: (req, res) => {
-    service.create({userId: req.user.id, preAuth: req.preAuth}, ({status, response}) => {
+    service.create({userId: req.userId || req.user.id}, ({status, response}) => {
       res.status(status).send(response)
     })
   },

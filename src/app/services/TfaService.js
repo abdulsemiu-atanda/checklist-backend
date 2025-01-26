@@ -94,19 +94,17 @@ class TfaService {
     }
   }
 
-  create({userId, preAuth}, callback) {
-    this.#preAuth(preAuth).then(([data]) => {
-      return this.user.show({id: data || userId}, {include: this.models.TfaConfig}).then(currentUser => {
-        if (currentUser.TfaConfig) {
-          callback({status: CREATED, response: {data: currentUser.TfaConfig.toJSON(), success: true}})
-        } else {
-          return currentUser.createTfaConfig({
-            url: this.#totp({user: currentUser.toJSON()}).toString()
-          }).then(tfaConfig => {
-            callback({status: CREATED, response: {data: tfaConfig.toJSON(), success: true}})
-          })
-        }
-      })
+  create({userId}, callback) {
+    this.user.show({id: userId}, {include: this.models.TfaConfig}).then(currentUser => {
+      if (currentUser.TfaConfig) {
+        callback({status: CREATED, response: {data: currentUser.TfaConfig.toJSON(), success: true}})
+      } else {
+        return currentUser.createTfaConfig({
+          url: this.#totp({user: currentUser.toJSON()}).toString()
+        }).then(tfaConfig => {
+          callback({status: CREATED, response: {data: tfaConfig.toJSON(), success: true}})
+        })
+      }
     }).catch(error => {
       logger.error(error.message)
 
