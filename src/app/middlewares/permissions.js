@@ -8,7 +8,7 @@ const service = new PermissionService(db)
 
 const permissions = {
   isOwner: async (req, res, next) => {
-    if (await service.isOwner({id: req.params.id, userId: req.user.id || req.userId, endpoint: req.baseUrl}))
+    if (await service.isOwner({id: req.params.id, userId: req.userId || req.user.id, endpoint: req.baseUrl}))
       next()
     else
       res.status(UNAUTHORIZED).send({message: INCOMPLETE_REQUEST, success: false})
