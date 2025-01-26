@@ -42,7 +42,12 @@ class TfaService {
   }
 
   #validate({url, token}) {
-    return this.#totp({url}).validate({token})
+    const counter = this.#totp({url}).validate({token})
+
+    if (counter === 0 || counter > 0)
+      return counter + 1
+
+    return 0
   }
 
   #response(user) {
@@ -115,7 +120,9 @@ class TfaService {
         const {TfaConfig: tfaConfig, ...user} = currentUser.toJSON()
 
         if (tfaConfig?.status === ACTIVE) {
-          const isValid = code ? Boolean(this.#validate({url: tfaConfig.url, token: code})) : (secureHash(backupCode, 'base64url') === tfaConfig.backupCode)
+          const isValid = code ?
+            Boolean(this.#validate({url: tfaConfig.url, token: code})) :
+            (secureHash(backupCode, 'base64url') === tfaConfig.backupCode)
 
           if (isValid) {
             if (backupCode)
