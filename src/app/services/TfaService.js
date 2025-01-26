@@ -135,6 +135,10 @@ class TfaService {
         } else {
           callback({status: UNAUTHORIZED, response: {message: INCOMPLETE_REQUEST, success: false}})
         }
+      }).catch(error => {
+        logger.error(error.message)
+
+        callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
       })
     })
   }
