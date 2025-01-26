@@ -126,7 +126,7 @@ class TfaService {
 
           if (isValid) {
             if (backupCode)
-              tfaConfig.update({status: DISABLED, backupCode: null, url: null})
+              currentUser.TfaConfig.update({status: DISABLED, backupCode: null, url: null})
 
             this.keystore.insert({key: currentUser.id, value: password})
             callback({status: OK, response: this.#response(user)})

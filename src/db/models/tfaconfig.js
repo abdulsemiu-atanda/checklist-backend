@@ -31,7 +31,7 @@ export default (sequelize, DataTypes) => {
         if (value)
           this.setDataValue('backupCode', secureHash(value, 'base64url'))
         else if (value !== undefined)
-          this.setDataValue('url', value)
+          this.setDataValue('backupCode', value)
       }
     },
     status: {
