@@ -3,8 +3,8 @@ import db from '../../db/models'
 import {isAdmin} from '../../util/authTools'
 import logger from '../constants/logger'
 
-import {OK, UNPROCESSABLE} from '../constants/statusCodes'
-import {UNPROCESSABLE_REQUEST} from '../constants/messages'
+import {ACCEPTED, OK, UNPROCESSABLE} from '../constants/statusCodes'
+import {ACCOUNT_DELETED, UNPROCESSABLE_REQUEST} from '../constants/messages'
 
 const user = new DataService(db.User)
 
@@ -25,6 +25,18 @@ const users = {
 
         res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
       })
+  },
+  destroy: (req, res) => {
+    if (req.params.id === req.user.id) {
+      user.destroy(req.params.id)
+        .then(() => res.status(ACCEPTED).send({message: ACCOUNT_DELETED, success: true}))
+        .catch(error => {
+          logger.error(error.message)
+          res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+        })
+    } else {
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+    }
   }
 }
 

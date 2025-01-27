@@ -5,13 +5,15 @@ import app from '../../../src/app'
 import db from '../../../src/db/models'
 import {seedRecords, create} from '../../fixtures'
 import {fakeUser, adminUser} from '../../fixtures/users'
-
-import {ADMIN, USER} from '../../../src/config/roles'
-import {OK, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
-import {UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
 import {tokenGenerator} from '../../tools'
 
+import {ADMIN, USER} from '../../../src/config/roles'
+import {ACCEPTED, OK, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
+import {ACCOUNT_DELETED, UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
+
 let adminToken
+let data
+let admin
 let userToken
 
 describe('Users Controller', () => {
@@ -20,6 +22,7 @@ describe('Users Controller', () => {
       create({type: 'users', trait: ADMIN}).then(([record]) => {
         tokenGenerator({user: record.toJSON(), password: adminUser.password}).then(token => {
           adminToken = token
+          admin = record
 
           create({type: 'users', trait: USER, data: fakeUser}).then(() => {
             seedRecords({count: 10, type: 'users'}).then(() => {
@@ -27,6 +30,7 @@ describe('Users Controller', () => {
                 .post('/api/auth/sign-in').send(fakeUser)
                 .then(response => {
                   userToken = response.body.token
+                  data = response.body.user
 
                   done()
                 })
@@ -82,6 +86,34 @@ describe('Users Controller', () => {
 
           done()
         })
+    })
+  })
+
+  describe('DELETE /api/users/:id', () => {
+    it('should throw an error when user trys to delete another account', done => {
+      request(app)
+      .delete(`/api/users/${admin.id}`)
+      .set('Authorization', userToken)
+      .end((error, response) => {
+        expect(error).to.not.exist
+        expect(response.statusCode).to.equal(UNPROCESSABLE)
+        expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+        done()
+      })
+    })
+
+    it('should delete user account successfully', done => {
+      request(app)
+      .delete(`/api/users/${data.id}`)
+      .set('Authorization', userToken)
+      .end((error, response) => {
+        expect(error).to.not.exist
+        expect(response.statusCode).to.equal(ACCEPTED)
+        expect(response.body.message).to.equal(ACCOUNT_DELETED)
+
+        done()
+      })
     })
   })
 })
