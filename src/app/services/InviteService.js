@@ -142,7 +142,7 @@ class InviteService {
     }).catch(error => {
       logger.error(error.message)
 
-      callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: true}})
+      callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
     })
   }
 
@@ -170,7 +170,7 @@ class InviteService {
     }).catch(error => {
       logger.error(error.message)
 
-      callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: true}})
+      callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
     })
   }
 }
