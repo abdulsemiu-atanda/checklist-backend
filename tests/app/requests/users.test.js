@@ -7,10 +7,12 @@ import {seedRecords, create} from '../../fixtures'
 import {fakeUser, adminUser} from '../../fixtures/users'
 
 import {ADMIN, USER} from '../../../src/config/roles'
-import {OK, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
-import {UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
+import {ACCEPTED, OK, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
+import {ACCOUNT_DELETED, UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
 
 let adminToken
+let data
+let admin
 let userToken
 
 describe('Users Controller', () => {
@@ -23,11 +25,13 @@ describe('Users Controller', () => {
               .post('/api/auth/sign-in').send(fakeUser)
               .then(response => {
                 userToken = response.body.token
+                data = response.body.user
 
                 request(app)
                   .post('/api/auth/sign-in').send(adminUser)
                   .then(response => {
                     adminToken = response.body.token
+                    admin = response.body.user
 
                     done()
                   })
@@ -83,6 +87,34 @@ describe('Users Controller', () => {
 
           done()
         })
+    })
+  })
+
+  describe('DELETE /api/users/:id', () => {
+    it('should throw an error when user trys to delete another account', done => {
+      request(app)
+      .delete(`/api/users/${admin.id}`)
+      .set('Authorization', userToken)
+      .end((error, response) => {
+        expect(error).to.not.exist
+        expect(response.statusCode).to.equal(UNPROCESSABLE)
+        expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+        done()
+      })
+    })
+
+    it('should delete user account successfully', done => {
+      request(app)
+      .delete(`/api/users/${data.id}`)
+      .set('Authorization', userToken)
+      .end((error, response) => {
+        expect(error).to.not.exist
+        expect(response.statusCode).to.equal(ACCEPTED)
+        expect(response.body.message).to.equal(ACCOUNT_DELETED)
+
+        done()
+      })
     })
   })
 })
