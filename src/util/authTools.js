@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
 import DataService from '../app/services/DataService'
@@ -37,7 +38,7 @@ export const isAdmin = user => {
     })
 }
 
-export const refreshToken = user => secureHash(`${user.id}${user.roleId}`, 'base64url')
+export const refreshToken = user => bcrypt.hashSync(secureHash(`${user.id}${user.roleId}`, 'base64url'), bcrypt.genSaltSync(10))
 
 export const isValidPreAuth = token => {
   const keystore = redisKeystore()
