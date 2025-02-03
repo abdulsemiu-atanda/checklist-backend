@@ -1,14 +1,15 @@
 import logger from '../constants/logger'
-import {isAdmin, verifyToken} from '../../util/authTools'
+import {isAdmin, isValidPreAuth, verifyToken} from '../../util/authTools'
 import {redisKeystore} from '../../util/tools'
 
 import {UNAUTHORIZED, UNPROCESSABLE} from '../constants/statusCodes'
 import {INCOMPLETE_REQUEST, UNPROCESSABLE_REQUEST} from '../constants/messages'
 
+const keystore = redisKeystore()
+
 const auth = {
   isLoggedIn: async (req, res, next) => {
     try {
-      const keystore = redisKeystore()
       const decoded = verifyToken(req.headers.authorization)
 
       if (await keystore.retrieve(decoded.id)) {
@@ -32,6 +33,42 @@ const auth = {
         next()
       else
         res.status(UNAUTHORIZED).send({message: INCOMPLETE_REQUEST, success: false})
+    } catch (error) {
+      logger.error(error.message)
+
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+    }
+  },
+  isValidPreAuth: async (req, res, next) => {
+    try {
+      const token = req.headers.authorization
+
+      if (await isValidPreAuth(token)) {
+        req.preAuth = token
+        req.userId = (await keystore.retrieve(token)).split('|')[0]
+
+        next()
+      } else {
+        res.status(UNAUTHORIZED).send({message: INCOMPLETE_REQUEST, success: false})
+      }
+    } catch (error) {
+      logger.error(error.message)
+
+      res.status(UNPROCESSABLE).send({message: UNPROCESSABLE_REQUEST, success: false})
+    }
+  },
+  isAuthenticated: async (req, res, next) => {
+    try {
+      const token = req.headers.authorization
+
+      if (await isValidPreAuth(token)) {
+        req.preAuth = token
+        req.userId = (await keystore.retrieve(token)).split('|')[0]
+
+        next()
+      } else {
+        await auth.isLoggedIn(req, res, next)
+      }
     } catch (error) {
       logger.error(error.message)
 

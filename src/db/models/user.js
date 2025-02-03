@@ -26,6 +26,7 @@ export default (sequelize, DataTypes) => {
       User.hasOne(models.Confirmation, {foreignKey: 'userId'})
       User.hasMany(models.Token, {foreignKey: 'userId'})
       User.hasOne(models.UserKey, {foreignKey: 'userId'})
+      User.hasOne(models.TfaConfig, {foreignKey: 'userId'})
       User.hasMany(models.Task, {foreignKey: 'userId'})
       User.hasMany(models.SharedKey, {foreignKey: 'userId'})
       User.hasMany(

@@ -9,10 +9,11 @@ import DataService from '../../../src/app/services/DataService'
 import db from '../../../src/db/models'
 import {digest} from '../../../src/util/cryptTools'
 import {create} from '../../fixtures'
-import {fakeUser, invalidUser} from '../../fixtures/users'
+import {adminUser, fakeUser, invalidUser} from '../../fixtures/users'
 import {generateCode, userToken} from '../../../src/util/authTools'
+import {totp} from '../../tools'
 
-import {USER} from '../../../src/config/roles'
+import {ADMIN, USER} from '../../../src/config/roles'
 import {
   ACCEPTED,
   BAD_REQUEST,
@@ -31,23 +32,30 @@ import {
   LOGIN_SUCCESS,
   UNPROCESSABLE_REQUEST
 } from '../../../src/app/constants/messages'
+import {ACTIVE, DISABLED} from '../../../src/config/tfaStatuses'
 
 const role = new DataService(db.Role)
 const user = new DataService(db.User)
+const tfaConfig = new DataService(db.TfaConfig)
 
+const backupCode = generateCode(16)
 const code = generateCode()
 const testUser = {...fakeUser, email: faker.internet.email()}
 const fakeToken = userToken({id: uuidV4(), roleId: uuidV4})
 
 let authToken
+let preAuthToken
 let refreshToken
 let token
 let data
+let otp
 
 describe('Auth Controller', () => {
   before(done => {
     db.sequelize.sync({force: true}).then(() => {
-      done()
+      create({type: 'users', trait: ADMIN}).then(() => {
+        done()
+      })
     })
   })
 
@@ -167,6 +175,7 @@ describe('Auth Controller', () => {
         .end((error, response) => {
           refreshToken = response.body.refreshToken
           data = response.body.user
+          otp = totp(data)
 
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(OK)
@@ -178,6 +187,44 @@ describe('Auth Controller', () => {
 
           done()
         })
+    })
+
+    it('returns pre auth token is user is an admin', done => {
+      request(app)
+        .post('/api/auth/sign-in').send(adminUser)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.token).to.not.exist
+          expect(response.body.refreshToken).to.not.exist
+          expect(response.body.preAuthToken).to.exist
+
+          done()
+        })
+    })
+
+    it('returns pre auth token when user has TFA enabled', done => {
+      tfaConfig.create({
+        backupCode,
+        userId: data.id,
+        status: ACTIVE,
+        url: otp.toString()
+      }).then(() => {
+        request(app)
+          .post('/api/auth/sign-in').send(fakeUser)
+          .end((error, response) => {
+            preAuthToken = response.body.preAuthToken
+
+            expect(error).to.not.exist
+            expect(response.statusCode).to.equal(OK)
+            expect(response.body.token).to.not.exist
+            expect(response.body.refreshToken).to.not.exist
+            expect(response.body.preAuthToken).to.exist
+            expect(response.body.data.userId).to.equal(data.id)
+
+            done()
+          })
+      })
     })
   })
 
@@ -471,6 +518,95 @@ describe('Auth Controller', () => {
           expect(error).to.not.exist
           expect(response.statusCode).to.equal(ACCEPTED)
           expect(response.body.message).to.equal('Logout Successful.')
+
+          done()
+        })
+    })
+  })
+
+  describe('POST /api/auth/tfa-login', () => {
+    it('returns an error if tfa code is invalid', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({code: '123456'})
+        .set('Authorization', preAuthToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNAUTHORIZED)
+          expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('throws an error if pre auth token is invalid', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({code: otp.generate()})
+        .set('Authorization', digest('123456'))
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNAUTHORIZED)
+          expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('throws an error if pre auth token is not specified', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({code: otp.generate()})
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNPROCESSABLE)
+          expect(response.body.message).to.equal(UNPROCESSABLE_REQUEST)
+
+          done()
+        })
+    })
+
+    it('successfully logs in user with valid tfa code', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({code: otp.generate()})
+        .set('Authorization', preAuthToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.user.id).to.equal(data.id)
+          expect(response.body.token).to.exist
+          expect(response.body.refreshToken).to.exist
+
+          done()
+        })
+    })
+
+    it('successfully logs in with backup code and disables tfa', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({backupCode})
+        .set('Authorization', preAuthToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(OK)
+          expect(response.body.user.id).to.equal(data.id)
+          expect(response.body.token).to.exist
+          expect(response.body.refreshToken).to.exist
+
+          tfaConfig.show({userId: data.id}).then(record => {
+            expect(record.status).to.equal(DISABLED)
+            expect(record.url).to.equal(null)
+            expect(record.backupCode).to.equal(null)
+
+            done()
+          }).catch(() => { done() })
+        })
+    })
+
+    it('returns an error if tfa config is not active', done => {
+      request(app)
+        .post('/api/auth/tfa-login').send({code: otp.generate()})
+        .set('Authorization', preAuthToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(UNAUTHORIZED)
+          expect(response.body.message).to.equal(INCOMPLETE_REQUEST)
 
           done()
         })

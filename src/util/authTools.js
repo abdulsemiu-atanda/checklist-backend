@@ -4,6 +4,7 @@ import DataService from '../app/services/DataService'
 import db from '../db/models'
 import {ADMIN} from '../config/roles'
 import logger from '../app/constants/logger'
+import {redisKeystore} from './tools'
 import {secureHash} from './cryptTools'
 
 export const userToken = (user, expiresIn = '1h') => jwt.sign(
@@ -37,3 +38,18 @@ export const isAdmin = user => {
 }
 
 export const refreshToken = user => secureHash(`${user.id}${user.roleId}`, 'base64url')
+
+export const isValidPreAuth = token => {
+  const keystore = redisKeystore()
+
+  return keystore.retrieve(token).then(data => {
+    if (data) {
+      const decrypted = keystore.encryptor.decrypt(token)
+      const [userId] = data.split('|')
+
+      return decrypted === secureHash(userId)
+    }
+
+    return false
+  })
+}
