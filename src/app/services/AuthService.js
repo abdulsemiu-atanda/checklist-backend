@@ -265,10 +265,10 @@ class AuthService {
   }
 
   refreshToken({token, user}, callback) {
-    const check = refreshToken(user)
+    const check = secureHash(`${user.id}${user.roleId}`, 'base64url')
 
     this.keystore.retrieve(user.id).then(session => {
-      if (check === token) {
+      if (bcrypt.compareSync(check, token)) {
         this.user.show({id: user.id}).then(currentUser => {
           const authToken = userToken(currentUser.toJSON())
 
