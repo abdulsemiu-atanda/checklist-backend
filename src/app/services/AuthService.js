@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt'
+import crypto from 'crypto'
 
 import AsymmetricEncryptionService from './AsymmetricEncryptionService'
 import confirmUserEmail from '../mailers/confirmUserEmail'
@@ -35,6 +36,7 @@ class AuthService {
     this.confirmation = new DataService(models.Confirmation)
     this.user = new DataService(models.User)
     this.role = new DataService(models.Role)
+    this.sharedKey = new DataService(models.SharedKey)
     this.token = new DataService(models.Token)
   }
 
@@ -53,6 +55,29 @@ class AuthService {
       }).catch(error => {
         logger.error(error.message)
       })
+    }
+  }
+
+  #createTaskKey({user, password}) {
+    if (user.UserKey) {
+      const encryptor = new AsymmetricEncryptionService(password)
+
+      this.sharedKey.show({userId: user.id}, {where: {ownableId: user.id}}).then(sharedKey => {
+        if (sharedKey) {
+          logger.info(`Task Key already created for ${user.id}`)
+        } else {
+          user.createSharedKey({
+            key: encryptor.encrypt({
+              publicKey: user.UserKey.publicKey,
+              data: crypto.randomBytes(64).toString('hex'),
+              fingerprint: user.UserKey.fingerprint
+            }),
+            ownableId: user.id
+          })
+        }
+      })
+    } else {
+      logger.info(`Unable to create task key for ${user.id}. Please create a UserKey first.`)
     }
   }
 
@@ -109,6 +134,7 @@ class AuthService {
               const token = userToken(user.toJSON())
 
               this.#createUserKey({user, password: payload.password})
+              this.#createTaskKey({user, password: payload.password})
               this.keystore.insert({key: user.id, value: payload.password})
 
               if (afterCreate)
