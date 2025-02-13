@@ -46,20 +46,22 @@ class AuthService {
     if (!user.UserKey) {
       const encryptor = new AsymmetricEncryptionService(password)
 
-      encryptor.generateKeyPair().then(({SHAFingerprint, ...keyPair}) => {
-        user.createUserKey({...keyPair, fingerprint: SHAFingerprint}).then(() => {
+      return encryptor.generateKeyPair().then(({SHAFingerprint, ...keyPair}) => {
+        return user.createUserKey({...keyPair, fingerprint: SHAFingerprint}).then(userKey => {
           logger.info(`UserKey created for user ${user.id}`)
-        }).catch(error => {
-          logger.error(error.message)
+
+          return userKey
         })
       }).catch(error => {
         logger.error(error.message)
       })
     }
+
+    return Promise.resolve()
   }
 
-  #createTaskKey({user, password}) {
-    if (user.UserKey) {
+  #createTaskKey({user, password, userKey}) {
+    if (userKey) {
       const encryptor = new AsymmetricEncryptionService(password)
 
       this.sharedKey.show({userId: user.id}, {where: {ownableId: user.id}}).then(sharedKey => {
@@ -68,9 +70,9 @@ class AuthService {
         } else {
           user.createSharedKey({
             key: encryptor.encrypt({
-              publicKey: user.UserKey.publicKey,
+              publicKey: userKey.publicKey,
               data: crypto.randomBytes(64).toString('hex'),
-              fingerprint: user.UserKey.fingerprint
+              fingerprint: userKey.fingerprint
             }),
             ownableId: user.id
           })
@@ -134,7 +136,7 @@ class AuthService {
               const token = userToken(user.toJSON())
 
               this.#createUserKey({user, password: payload.password})
-              this.#createTaskKey({user, password: payload.password})
+                .then(userKey => this.#createTaskKey({user, password: payload.password, userKey}))
               this.keystore.insert({key: user.id, value: payload.password})
 
               if (afterCreate)
@@ -193,7 +195,9 @@ class AuthService {
         if (user) {
           if (bcrypt.compareSync(payload.password, user.password)) {
             const currentUser = user.toJSON()
+
             this.#createUserKey({user, password: payload.password})
+              .then(userKey => this.#createTaskKey({user, password: payload.password, userKey: userKey || user.UserKey}))
 
             if (this.#needsPreAuth(currentUser)) {
               this.#preAuthResponse({user: currentUser, password: payload.password}, callback)

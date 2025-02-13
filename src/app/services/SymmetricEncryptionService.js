@@ -27,8 +27,7 @@ class SymmetricEncryptionService extends EncryptionService {
     const iv = Buffer.from(decoded.slice(midpoint, end), 'hex')
     const encrypted = `${decoded.slice(0, midpoint)}${decoded.slice(end)}`
     const decipher = crypto.createDecipheriv(this.#ALGORITHM, this.key, iv)
-    let decrypted = decipher.update(encrypted, this.#OUTPUT_ENCODING, this.#INPUT_ENCODING)
-    decrypted += decipher.final(this.#INPUT_ENCODING)
+    const decrypted = [decipher.update(encrypted, this.#OUTPUT_ENCODING, this.#INPUT_ENCODING), decipher.final(this.#INPUT_ENCODING)].join('')
 
     return decrypted
   }
