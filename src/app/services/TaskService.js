@@ -148,36 +148,42 @@ class TaskService {
       .then(() => callback({status: ACCEPTED, response: {message: 'Record deleted', success: true}}))
   }
 
-  inviteUser({currentUserId, payload}, callback) {
-    this.invite.index({
-      where: {emailDigest: digest(payload.invite?.email?.toLowerCase() || '')},
-      include: this.models.Token
-    }).then(invites => {
-      if (isEmpty(invites) || invites.every(invite => invite.Token.userId !== currentUserId)) {
-        this.user.show({id: currentUserId}, {include: this.models.UserKey}).then(user => {
-          if (user?.UserKey) {
-            const value = secureHash(generateCode(9), 'base64url')
+  inviteUser({taskId, currentUserId, payload}, callback) {
+    this.task.show({id: taskId}).then(task => {
+      if (task) {
+        this.invite.index({
+          where: {emailDigest: digest(payload.invite?.email?.toLowerCase() || '')},
+          include: this.models.Token
+        }).then(invites => {
+          if (isEmpty(invites) || invites.every(invite => invite.Token.userId !== currentUserId)) {
+            this.user.show({id: currentUserId}, {include: this.models.UserKey}).then(user => {
+              if (user?.UserKey) {
+                const value = secureHash(generateCode(9), 'base64url')
 
-            return this.token.create(
-              {value, type: SHARING, userId: user.id, Invite: payload.invite},
-              {include: this.models.Invite}
-            ).then(([token]) => {
-              return this.permission.create({ownableId: token.Invite.id, ownableType: 'Invite', ...payload.permission}).then(() => {
-                callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
-              })
+                return this.token.create(
+                  {value, type: SHARING, userId: user.id, Invite: payload.invite},
+                  {include: this.models.Invite}
+                ).then(([token]) => {
+                  return this.permission.create({ownableId: token.Invite.id, ownableType: 'Invite', ...payload.permission}).then(() => {
+                    callback({status: ACCEPTED, response: {data: token.Invite.toJSON(), message: 'Collaboration invite created', success: true}})
+                  })
+                })
+              } else {
+                logger.error(`UserKey missing for user ${currentUserId}`)
+
+                callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+              }
+            }).catch(error => {
+              logger.error(error.message)
+
+              callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
             })
           } else {
-            logger.error(`UserKey missing for user ${currentUserId}`)
-
-            callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
+            callback({status: ACCEPTED, response: {message: 'Collaboration invite created', success: true}})
           }
-        }).catch(error => {
-          logger.error(error.message)
-
-          callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
         })
       } else {
-        callback({status: ACCEPTED, response: {message: 'Collaboration invite created', success: true}}) 
+        callback({status: ACCEPTED, response: {message: 'Collaboration invite created', success: true}})
       }
     })
   }
