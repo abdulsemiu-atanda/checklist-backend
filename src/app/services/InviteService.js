@@ -1,7 +1,9 @@
 import AuthService from './AuthService'
 import DataService from './DataService'
+import KeyService from './KeyService'
+
 import {dateToISOString, redisKeystore, smtpServer} from '../../util/tools'
-import {digest, updatePrivateKey} from '../../util/cryptTools'
+import {digest} from '../../util/cryptTools'
 import logger from '../constants/logger'
 import inviteEmail from '../mailers/inviteEmail'
 
@@ -21,7 +23,6 @@ class InviteService {
     this.token = new DataService(models.Token)
     this.user = new DataService(models.User)
     this.userKey = new DataService(models.UserKey)
-    this.sharedKey = new DataService(models.SharedKey)
     this.permission = new DataService(models.Permission)
 
     this.accept = this.accept.bind(this)
@@ -97,11 +98,9 @@ class InviteService {
             const auth = new AuthService(this.models)
 
             auth.create({...user, email, confirmedAt: now}, callback, ownableId => {
-              this.userKey.show({userId: token.userId}).then(parentKey => {
-                const key = updatePrivateKey({backupKey: parentKey.backupKey, passphrase: user.password})
+              const keyService = new KeyService(this.models, user.password)
 
-                this.sharedKey.create({key, ownableId, userId: token.userId})
-              })
+              keyService.grantTaskKeyToUser({userId: token.userId, ownableId})
               this.permission.update(permission.id, {ownableId, ownableType: 'User'})
             })
           })
@@ -124,15 +123,10 @@ class InviteService {
               this.permission.show({ownableId: invite.id, ownableType: 'Invite'}).then(permission => {
                 this.permission.update(permission.id, {ownableId: currentUser.id, ownableType: 'User'})
               })
+              const keyService = new KeyService(this.models, session)
 
-              return this.userKey.show({userId: invite.Token.userId}).then(parentKey => {
-                const key = updatePrivateKey({backupKey: parentKey.backupKey, passphrase: session})
-
-                return this.sharedKey.create({key, userId: invite.Token.userId, ownableId: currentUser.id})
-                  .then(() => {
-                    callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})
-                  })
-              })
+              return keyService.grantTaskKeyToUser({userId: invite.Token.userId, ownableId: currentUser.id})
+                .then(() => callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}}))
             })
           } else {
             callback({status: ACCEPTED, response: {message: 'Invite accepted', success: true}})

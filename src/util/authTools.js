@@ -38,7 +38,7 @@ export const isAdmin = user => {
     })
 }
 
-export const refreshToken = user => bcrypt.hashSync(secureHash(`${user.id}${user.roleId}`, 'base64url'), bcrypt.genSaltSync(10))
+export const refreshToken = user => encodeURIComponent(bcrypt.hashSync(secureHash(`${user.id}${user.roleId}`, 'base64url'), bcrypt.genSaltSync(10)))
 
 export const isValidPreAuth = token => {
   const keystore = redisKeystore()

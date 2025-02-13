@@ -1,11 +1,13 @@
+import crypto from 'crypto'
+
 class EncryptionService {
   key
 
   constructor(key, mode = 'symmetric') {
-    if (typeof key !== 'string' || (mode === 'symmetric' && key.length !== 32))
-      throw new TypeError('Invalid initialization parameters, expect key: [String] with length 32.')
+    if (typeof key !== 'string')
+      throw new TypeError('Invalid initialization parameters, expect key: [String].')
 
-    this.key = mode === 'symmetric' ? Buffer.from(key) : key
+    this.key = mode === 'symmetric' ? crypto.scryptSync(key, process.env.ENCRYPTION_SALT, 32) : key
   }
 
   encrypt() {

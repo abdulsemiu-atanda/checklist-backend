@@ -7,11 +7,10 @@ const service = new EncryptionService(PASSPHRASE)
 
 describe('EncryptionService', () => {
   describe('#constructor', () => {
-    it('initializes key with correct length', () => expect(service.key).to.have.length(32))
+    it('initializes with correct data type', () => expect(service.key).to.have.length(32))
 
     it('throws an error with invalid passphrase data type', () => {
-      expect(() => { new EncryptionService(1234) }).to.throw(TypeError, 'Invalid initialization parameters, expect key: [String] with length 32.')
-      expect(() => { new EncryptionService('testing') }).to.throw(TypeError, 'Invalid initialization parameters, expect key: [String] with length 32.')
+      expect(() => { new EncryptionService(1234) }).to.throw(TypeError, 'Invalid initialization parameters, expect key: [String].')
     })
 
     it('does not required fixed key length in asymmetric mode', () => {

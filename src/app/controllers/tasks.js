@@ -36,6 +36,7 @@ const tasks = {
   },
   invite: (req, res) => {
     service.inviteUser({
+      taskId: req.params.id,
       currentUserId: req.user.id,
       payload: {...req.body, permission: {...req.body.permission, taskId: req.params.id}}
     }, ({status, response}) => {

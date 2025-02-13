@@ -302,6 +302,19 @@ describe('Tasks Controller:', () => {
         })
     })
 
+    it('does not attempt to invite user with non-existent task', done => {
+      request(app)
+        .post(`/api/tasks/${uuidV4()}/invites`).send({invite: invitee})
+        .set('Authorization', userToken)
+        .end((error, response) => {
+          expect(error).to.not.exist
+          expect(response.statusCode).to.equal(ACCEPTED)
+          expect(response.body.message).to.equal('Collaboration invite created')
+
+          done()
+        })
+    })
+
     it('successfully invites new collaborator', done => {
       request(app)
         .post(`/api/tasks/${autreTask.id}/invites`).send({invite: fakeInvite})
