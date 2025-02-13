@@ -7,7 +7,7 @@ class EncryptionService {
     if (typeof key !== 'string')
       throw new TypeError('Invalid initialization parameters, expect key: [String].')
 
-    this.key = mode === 'symmetric' ? crypto.scryptSync(key, crypto.randomBytes(32).toString('hex'), 32) : key
+    this.key = mode === 'symmetric' ? crypto.scryptSync(key, process.env.ENCRYPTION_SALT, 32) : key
   }
 
   encrypt() {
