@@ -8,7 +8,7 @@ import {generateCode, refreshToken, userToken} from '../../util/authTools'
 import {secureHash} from '../../util/cryptTools'
 
 import {CREATED, OK, UNAUTHORIZED, UNPROCESSABLE} from '../constants/statusCodes'
-import {ACTIVE, DISABLED} from '../../config/tfaStatuses'
+import {ACTIVE, DISABLED, INITIAL} from '../../config/tfaStatuses'
 import {INCOMPLETE_REQUEST, UNPROCESSABLE_REQUEST} from '../constants/messages'
 
 class TfaService {
@@ -98,7 +98,15 @@ class TfaService {
   create({userId}, callback) {
     this.user.show({id: userId}, {include: this.models.TfaConfig}).then(currentUser => {
       if (currentUser.TfaConfig) {
-        callback({status: CREATED, response: {data: currentUser.TfaConfig.toJSON(), success: true}})
+        const tfaConfig = currentUser.TfaConfig
+
+        if (tfaConfig.status === DISABLED) {
+          tfaConfig.update({url: this.#totp({user: currentUser.toJSON()}).toString(), status: INITIAL}).then(record => {
+            callback({status: CREATED, response: {data: record.toJSON(), success: true}})
+          })
+        } else {
+          callback({status: CREATED, response: {data: tfaConfig.toJSON(), success: true}})
+        }
       } else {
         return currentUser.createTfaConfig({
           url: this.#totp({user: currentUser.toJSON()}).toString()
