@@ -1,8 +1,12 @@
+import crypto from 'crypto'
 import {fakerYO_NG as faker} from '@faker-js/faker'
 
 import AsymmetricEncryptionService from '../../src/app/services/AsymmetricEncryptionService'
-import {adminUser, fakeUser} from './users'
 import DataService from '../../src/app/services/DataService'
+import KeyService from '../../src/app/services/KeyService'
+import SymmetricEncryptionService from '../../src/app/services/SymmetricEncryptionService'
+
+import {adminUser, fakeUser} from './users'
 import {dateToISOString, isEmpty} from '../../src/util/tools'
 import db from '../../src/db/models'
 import {generateCode} from '../../src/util/authTools'
@@ -12,7 +16,7 @@ import {digest, encryptFields, secureHash, updatePrivateKey} from '../../src/uti
 import {ADMIN, USER} from '../../src/config/roles'
 import {SHARING} from '../../src/config/tokens'
 import {ACCEPTED} from '../../src/config/invites'
-import { READ } from '../../src/config/permissions'
+import {READ} from '../../src/config/permissions'
 
 const user = new DataService(db.User)
 
@@ -35,7 +39,12 @@ const createUser = ({data, trait}) => {
         const attributes = isEmpty(data) ? {...fakeUser, ...shared, email: faker.internet.email()} : {...data, ...shared}
 
         return encryptor.generateKeyPair().then(({SHAFingerprint, ...keyPair}) => {
-          return user.create({...attributes, UserKey: {...keyPair, fingerprint: SHAFingerprint}}, {include: db.UserKey})
+          return user.create({...attributes, UserKey: {...keyPair, fingerprint: SHAFingerprint}}, {include: [db.UserKey]})
+            .then(([record, created]) => {
+              const key = encryptor.encrypt({...record.toJSON().UserKey, data: crypto.randomBytes(64).toString('hex')})
+
+              return db.SharedKey.create({key, userId: record.id, ownableId: record.id}).then(data => ([record, created]))
+            })
         })
       })
     default:
@@ -64,22 +73,23 @@ export const seedRecords = async ({count = 1, type}) => {
 
 export const setupTaskCollaboration = ({inviter, invitee, permissionType = READ}) => {
   return Promise.all([
-    user.show({emailDigest: digest(inviter.email.toLowerCase())}, {include: db.UserKey}),
-    create({type: 'users', data: invitee})
+    user.show({emailDigest: digest(inviter.email.toLowerCase())}, {include: [db.UserKey, db.SharedKey]}),
+    create({type: 'users', data: invitee, trait: 'withUserKey'})
   ]).then(async ([record, [collaborator]]) => {
     const owner = record ? record : (await create({type: 'users', data: inviter, trait: 'withUserKey'}))[0]
 
     logger.info(`Created owner with user id ${owner.id}`)
     logger.info(`Created collaborator with user id ${collaborator.id}`)
-    const userKey = owner.UserKey.toJSON()
-    const encryptor = new AsymmetricEncryptionService(inviter.password)
+
+    const keyService = new KeyService(db, inviter.password)
+    const rawKey = await keyService.rawTaskKey({taskUserId: owner.id, currentUserId: owner.id})
+    const encryptor = new SymmetricEncryptionService(rawKey)
     const data = {title: faker.book.title(), description: faker.lorem.paragraphs(2)}
-    const encrypted = encryptFields({record: data, encryptor, userKey})
-    const key = updatePrivateKey({backupKey: userKey.backupKey, passphrase: invitee.password})
+    const encrypted = encryptFields({record: data, encryptor})
 
     return Promise.all([
       owner.createTask(encrypted),
-      owner.createSharedKey({key, ownableId: collaborator.id}),
+      keyService.grantTaskKeyToUser({userId: owner.id, ownableId: collaborator.id}),
       owner.createToken({value: secureHash(generateCode(9)), type: SHARING})
     ]).then(([task, _sharedKey, token]) => {
       const now = dateToISOString(Date.now())

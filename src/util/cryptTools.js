@@ -83,14 +83,14 @@ export const updatePrivateKey = ({backupKey, passphrase}) => forge.util.encode64
  * Retruns the record with its fields encrypted
  * @param {{
  * record: Object,
- * encryptor: import('../app/services/AsymmetricEncryptionService').default,
- * userKey: {publicKey: String, fingerprint: String}}}
+ * encryptor: import('../app/services/SymmetricEncryptionService').default
+ * }}
  * @returns {Object}
  */
-export const encryptFields = ({record, encryptor, userKey: {publicKey, fingerprint}}) => Object.entries(record).reduce(
+export const encryptFields = ({record, encryptor}) => Object.entries(record).reduce(
   (dictionary, [key, data]) => ({
     ...dictionary,
-    [key]: encryptor.encrypt({publicKey, data, fingerprint})
+    [key]: encryptor.encrypt(data)
   }),
   {}
 )
@@ -99,13 +99,13 @@ export const encryptFields = ({record, encryptor, userKey: {publicKey, fingerpri
  * Retruns the record with its fields encrypted
  * @param {{
  * record: Object,
- * encryptor: import('../app/services/AsymmetricEncryptionService').default,
- * userKey: {privateKey: String}}}
+ * encryptor: import('../app/services/SymmetricEncryptionService').default,
+ * }}
  * @returns {Object}
  */
-export const decryptFields = ({record, encryptor, userKey: {privateKey}, fields = []}) => fields.reduce((dictionary, field) => {
+export const decryptFields = ({record, encryptor, fields = []}) => fields.reduce((dictionary, field) => {
   if (record[field])
-    return {...dictionary, [field]: encryptor.decrypt({privateKey, encrypted: record[field]})}
+    return {...dictionary, [field]: encryptor.decrypt(record[field])}
   else
     return dictionary
 }, record)
