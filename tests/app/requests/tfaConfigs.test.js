@@ -11,7 +11,7 @@ import {totp} from '../../tools'
 
 import {ADMIN} from '../../../src/config/roles'
 import {CREATED, OK, UNAUTHORIZED, UNPROCESSABLE} from '../../../src/app/constants/statusCodes'
-import {ACTIVE, INITIAL} from '../../../src/config/tfaStatuses'
+import {ACTIVE, DISABLED, INITIAL} from '../../../src/config/tfaStatuses'
 import {INCOMPLETE_REQUEST, UNPROCESSABLE_REQUEST} from '../../../src/app/constants/messages'
 
 const otp = totp(fakeUser)
@@ -165,6 +165,22 @@ describe('TfaConfigs Controller:', () => {
 
           done()
         })
+    })
+
+    it('reinitializes tfa config if it is disabled', done => {
+      tfaConfig.update({url: null, status: DISABLED, backupCode: null}).then(() => {
+        request(app)
+          .post('/api/tfa-configs').send({})
+          .set('Authorization', userToken)
+          .end((error, response) => {
+            expect(error).to.not.exist
+            expect(response.statusCode).to.equal(CREATED)
+            expect(response.body.data.id).to.equal(tfaConfig.id)
+            expect(response.body.data.status).to.equal(INITIAL)
+
+            done()
+          })
+      })
     })
 
     it('returns error if no payload is specified', done => {
