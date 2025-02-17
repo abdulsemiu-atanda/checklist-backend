@@ -174,10 +174,15 @@ class TfaService {
           callback({status: UNPROCESSABLE, response: {message: UNPROCESSABLE_REQUEST, success: false}})
         } else {
           return tfaConfig.update(payload)
-            .then(record => callback({
-              status: OK,
-              response: {data: record.toJSON(), success: true}
-            }))
+            .then(record => {
+              // eslint-disable-next-line no-unused-vars
+              const {User: _, ...data} = record.toJSON()
+
+              callback({
+                status: OK,
+                response: {data, success: true}
+              })
+            })
         }
       }
     }).catch(error => {
