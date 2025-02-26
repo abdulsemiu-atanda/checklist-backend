@@ -54,3 +54,18 @@ jobs:
       - run: yarn --frozen-lockfile
       - run: yarn run build
       - run: yarn test
+        env:
+          HASH_SALT: ${{ secrets.HASH_SALT }}
+          SECRET: ${{ secrets.SECRET }}
+          ENCRYPTION_SALT: ${{ secrets.ENCRYPTION_SALT }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+          DATA_DIGEST_KEY: ${{ secrets.DATA_DIGEST_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
+          JS_LOG: ${{ secrets.JS_LOG }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
