@@ -6,13 +6,10 @@ name: Node.js CI
 on: [push, pull_request]
 
 jobs:
-  databases:
-    # Containers must run in Linux based operating systems
-    runs-on: ubuntu-latest
-    # Docker Hub image that `redis` executes in
-    container: node:20-bookworm-slim
-
-    # Service containers to run with `container-job`
+  build:
+    runs-on:
+      ubuntu-latest
+      # Service containers to run with `container-job`
     services:
       # Label used to access the service container
       redis:
@@ -37,9 +34,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
-  build:
-    runs-on: ubuntu-latest
 
     strategy:
       matrix:
